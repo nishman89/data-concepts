@@ -1,4 +1,4 @@
-/* ---------- How this site works, and Meet Ironbridge Leisure ---------- */
+/* ---------- How this site works, and Meet Sparta Leisure ---------- */
 const SITE_INTRO = `
 <p class="lede">This site teaches the core ideas of working with data, and gives you somewhere to practise them on a realistic dataset.</p>
 <h2 class="dot">The learning path</h2>
@@ -9,7 +9,7 @@ const SITE_INTRO = `
 <h2 class="dot">Two ways to practise Excel</h2>
 <p>The Excel exercises can be done in two ways. Switch between them on any exercise, and use whichever suits you.</p>
 <table class="mini"><tr><th>Practise here</th><th>In Excel</th></tr>
-<tr><td>Type a formula in the grid beside the lesson. It runs in your browser on the same data, and is checked straight away. Nothing to install, and it works on a phone.</td><td>Download the Ironbridge workbook, do the task in Excel, and type the answer you got into the box. This is how you'll work for real, and it's the only way to practise sorting, filtering, pivot tables and charts.</td></tr></table>
+<tr><td>Type a formula in the grid beside the lesson. It runs in your browser on the same data, and is checked straight away. Nothing to install, and it works on a phone.</td><td>Download the Sparta Leisure workbook, do the task in Excel, and type the answer you got into the box. This is how you'll work for real, and it's the only way to practise sorting, filtering, pivot tables and charts.</td></tr></table>
 ${TIP('The practice grid understands the Excel functions in this course, including XLOOKUP, COUNTIFS and DATEDIF. A few things only exist in Excel itself: pivot tables, charts, and functions that "spill" several results, such as FILTER and UNIQUE.')}
 <h2 class="dot">Quizzes and the capstone</h2>
 <p>Each unit has a short <strong>end-of-unit quiz</strong>, and there's a <strong>final quiz</strong> across the whole path. The pass mark is 65%. The <strong>capstone project</strong> gives you a raw, messy export to clean and analyse in Excel (Power BI is optional), and asks you to make recommendations to the board.</p>
@@ -17,7 +17,7 @@ ${TIP('The practice grid understands the Excel functions in this course, includi
 <p>Progress is saved in this browser only, on this device. Nothing is sent anywhere. Clearing your browser data, or switching to another browser, starts you afresh.</p>`;
 
 const DATA_INTRO = `
-<p class="lede">Ironbridge Leisure is a made-up chain of six leisure centres in Shropshire, the Black Country and Worcestershire. Its data is used in every Excel exercise, the statistics lessons and the capstone project.</p>
+<p class="lede">Sparta Leisure is a made-up chain of six leisure centres in Shropshire, the Black Country and Worcestershire. Its data is used in every Excel exercise, the statistics lessons and the capstone project.</p>
 <p>Members pick a plan, belong to a home site, check in at the gym and book classes. Three of the six sites have a pool. The data covers everyone who joined up to the end of 2025, and every visit and class booking during 2025.</p>
 <table class="mini"><tr><th>Sheet</th><th>One row per…</th><th>Links to</th></tr>
 <tr><td><strong>Sites</strong></td><td>leisure centre</td><td></td></tr>
@@ -32,7 +32,7 @@ const DATA_INTRO = `
 <p>The sheets link through shared codes, like tables in a database: <code>Visits.MemberID</code> matches <code>Members.MemberID</code>, which tells you who made each visit. In Excel, you follow these links with lookups such as <code>XLOOKUP</code>.</p>
 <p>${DL_WORKBOOK}</p>`;
 
-/* Positions and columns for the Ironbridge diagram (PK = primary key, FK = foreign key → table) */
+/* Positions and columns for the Sparta Leisure diagram (PK = primary key, FK = foreign key → table) */
 const DATA_ERD = {
   tables: [
     { name:'Plans', x:20, y:20, cols:[['PlanCode','PK'],['PlanName'],['MonthlyFee'],['JoiningFee'],['PeakAccess'],['ClassesPerMonth'],['PoolAccess'],['MinAge']] },

@@ -1,12 +1,12 @@
-"""Generates the Ironbridge Leisure dataset used by the whole site.
+"""Generates the Sparta Leisure dataset used by the whole site.
 
 Run once (python3 scripts/generate_data.py) and commit what it writes. The fixed seed means the same files every time,
 so every exercise answer is stable. It writes:
 
   data/workbook.json                         the lesson data, embedded in the site (dates are Excel serial numbers)
   data/capstone_facts.json                   numbers the capstone page quotes ("check your numbers")
-  public/downloads/ironbridge-leisure.xlsx   the same lesson data as an Excel workbook
-  public/downloads/ironbridge-capstone.zip   the raw, messy capstone export (CSV, JSON and XML)
+  public/downloads/sparta-leisure.xlsx   the same lesson data as an Excel workbook
+  public/downloads/sparta-leisure-capstone.zip   the raw, messy capstone export (CSV, JSON and XML)
 
 Needs numpy and openpyxl.
 """
@@ -248,14 +248,14 @@ SHEETS.append(dict(name='MembersRaw', note='A messy extract from the old members
 
 os.makedirs(os.path.join(ROOT, 'data'), exist_ok=True)
 with open(os.path.join(ROOT, 'data/workbook.json'), 'w') as f:
-    json.dump(dict(company='Ironbridge Leisure', sheets=[dict(name=s['name'], note=s['note'], cols=[{k: v for k, v in c.items() if v is not None} for c in s['cols']], rows=s['rows'], headerNumbers=s.get('header_numbers', False)) for s in SHEETS]), f, separators=(',', ':'))
+    json.dump(dict(company='Sparta Leisure', sheets=[dict(name=s['name'], note=s['note'], cols=[{k: v for k, v in c.items() if v is not None} for c in s['cols']], rows=s['rows'], headerNumbers=s.get('header_numbers', False)) for s in SHEETS]), f, separators=(',', ':'))
 
 # ---------------------------------------------------------------- the lesson workbook (xlsx)
 NUMFMT = dict(date='dd/mm/yyyy', datetime='dd/mm/yyyy hh:mm', time='hh:mm', month='mmm yyyy', money='£#,##0.00', money0='£#,##0', int='0', num='0.00')
 wb = Workbook(); ws = wb.active; ws.title = 'Read me'
 F = Font(name='Arial', size=10); FB = Font(name='Arial', size=10, bold=True, color='FFFFFF'); HEAD = PatternFill('solid', fgColor='2D2A2B')
-readme = [('Ironbridge Leisure', True), ('Practice data for the Sparta Global Data Concepts learning path. Ironbridge Leisure is a made-up chain of six leisure centres in the West Midlands; every person in this data is invented.', False), ('', False), ('Sheet', True)]
-ws['A1'] = 'Ironbridge Leisure'; ws['A1'].font = Font(name='Arial', size=16, bold=True, color='D42A57')
+readme = [('Sparta Leisure', True), ('Practice data for the Sparta Global Data Concepts learning path. Sparta Leisure is a made-up chain of six leisure centres in the West Midlands; every person in this data is invented.', False), ('', False), ('Sheet', True)]
+ws['A1'] = 'Sparta Leisure'; ws['A1'].font = Font(name='Arial', size=16, bold=True, color='D42A57')
 ws['A2'] = readme[1][0]; ws['A2'].font = F
 ws['A4'], ws['B4'], ws['C4'] = 'Sheet', 'Rows', 'What it holds'
 for c in 'ABC': ws[c + '4'].font = FB; ws[c + '4'].fill = HEAD
@@ -286,7 +286,7 @@ for s in SHEETS:
             if fmt and not (s['name'] == 'MembersRaw' and c['type'] == 'num'): cell.number_format = fmt
     sh.freeze_panes = 'A2'
     sh.auto_filter.ref = f"A1:{get_column_letter(len(s['cols']))}{len(s['rows']) + 1}"
-wb.save(os.path.join(ROOT, 'public/downloads/ironbridge-leisure.xlsx'))
+wb.save(os.path.join(ROOT, 'public/downloads/sparta-leisure.xlsx'))
 
 # ---------------------------------------------------------------- the capstone export (2026, raw and messy)
 S26, E26 = date(2026, 1, 1), date(2026, 9, 30)
@@ -388,22 +388,22 @@ with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
     def csv_text(header, rows):
         s = io.StringIO(); w = csv.writer(s, lineterminator='\r\n'); w.writerow(header); w.writerows(rows); return s.getvalue()
     hdr = list(mrows[0].keys())
-    z.writestr('ironbridge-capstone/members.csv', csv_text(hdr, [[r[k] for k in hdr] for r in mrows]))
-    z.writestr('ironbridge-capstone/visits.csv', csv_text(['VisitID', 'MemberID', 'SiteID', 'CheckIn', 'CheckOut'],
+    z.writestr('sparta-leisure-capstone/members.csv', csv_text(hdr, [[r[k] for k in hdr] for r in mrows]))
+    z.writestr('sparta-leisure-capstone/visits.csv', csv_text(['VisitID', 'MemberID', 'SiteID', 'CheckIn', 'CheckOut'],
                [[v['VisitID'], v['MemberID'], v['SiteID'], ts(v['CheckIn'], v['SiteID']), ts(v['CheckOut'], v['SiteID'])] for v in vrows]))
-    z.writestr('ironbridge-capstone/bookings.json', json.dumps({'exported': '2026-10-01T06:00:00Z', 'source': 'ClassBook v3', 'bookings': brows}, indent=1))
-    z.writestr('ironbridge-capstone/bookings.csv', csv_text(list(brows[0].keys()), [['' if v is None else v for v in b.values()] for b in brows]))
-    sx = ['<?xml version="1.0" encoding="UTF-8"?>', '<sites company="Ironbridge Leisure">']
+    z.writestr('sparta-leisure-capstone/bookings.json', json.dumps({'exported': '2026-10-01T06:00:00Z', 'source': 'ClassBook v3', 'bookings': brows}, indent=1))
+    z.writestr('sparta-leisure-capstone/bookings.csv', csv_text(list(brows[0].keys()), [['' if v is None else v for v in b.values()] for b in brows]))
+    sx = ['<?xml version="1.0" encoding="UTF-8"?>', '<sites company="Sparta Leisure">']
     for s in SITES:
         sx.append(f'  <site id="{s[0]}">\n    <name>{s[1]}</name>\n    <town>{s[2]}</town>\n    <pool>{"yes" if s[3] else "no"}</pool>\n    <capacity>{s[4]}</capacity>\n    <opened>{s[5].isoformat()}</opened>\n    <location lat="{s[6]}" lon="{s[7]}"/>\n  </site>')
     sx.append('</sites>')
-    z.writestr('ironbridge-capstone/sites.xml', '\n'.join(sx) + '\n')
-    z.writestr('ironbridge-capstone/plans.csv', csv_text(['PlanCode', 'PlanName', 'MonthlyFee2026', 'JoiningFee', 'PeakAccess', 'ClassesPerMonth', 'PoolAccess', 'MinAge'],
+    z.writestr('sparta-leisure-capstone/sites.xml', '\n'.join(sx) + '\n')
+    z.writestr('sparta-leisure-capstone/plans.csv', csv_text(['PlanCode', 'PlanName', 'MonthlyFee2026', 'JoiningFee', 'PeakAccess', 'ClassesPerMonth', 'PoolAccess', 'MinAge'],
                [[p[0], p[1], round(p[2] + {'OFF': 1, 'STD': 1.5, 'PREM': 2, 'STU': 1, 'SEN': 1}[p[0]], 2), p[3], 'yes' if p[4] else 'no', p[5], 'yes' if p[6] else 'no', p[7]] for p in PLANS]))
-    z.writestr('ironbridge-capstone/classes.csv', csv_text(['ClassID', 'ClassName', 'Category', 'DurationMins', 'Intensity', 'MaxPlaces'], [list(c[:6]) for c in CLASSES]))
-    z.writestr('ironbridge-capstone/marketing.csv', csv_text(['Month', 'SiteID', 'MarketingSpend'], mk))
-    z.writestr('ironbridge-capstone/README.txt', '\r\n'.join([
-        'Ironbridge Leisure: capstone data export, 1 January to 30 September 2026',
+    z.writestr('sparta-leisure-capstone/classes.csv', csv_text(['ClassID', 'ClassName', 'Category', 'DurationMins', 'Intensity', 'MaxPlaces'], [list(c[:6]) for c in CLASSES]))
+    z.writestr('sparta-leisure-capstone/marketing.csv', csv_text(['Month', 'SiteID', 'MarketingSpend'], mk))
+    z.writestr('sparta-leisure-capstone/README.txt', '\r\n'.join([
+        'Sparta Leisure: capstone data export, 1 January to 30 September 2026',
         '',
         'members.csv     every member who joined up to 30 September 2026 (status as at 30 September 2026)',
         'visits.csv      every gym check-in and check-out',
@@ -414,7 +414,7 @@ with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
         'marketing.csv   marketing spend (£) by site and month, January 2025 to September 2026',
         '',
         'This is a raw export. It has NOT been cleaned. Everyone in it is invented.', '']))
-with open(os.path.join(ROOT, 'public/downloads/ironbridge-capstone.zip'), 'wb') as f: f.write(buf.getvalue())
+with open(os.path.join(ROOT, 'public/downloads/sparta-leisure-capstone.zip'), 'wb') as f: f.write(buf.getvalue())
 with open(os.path.join(ROOT, 'data/capstone_facts.json'), 'w') as f: json.dump(facts, f, indent=1)
 
 print('members', len(lesson_members), 'visits25', len(visits25), 'bookings25', len(bookings25), 'raw', len(raw_rows))

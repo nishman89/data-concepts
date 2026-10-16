@@ -13,7 +13,7 @@ const TABS = tabs => { const n=++TABS_N;
 const W = (name, attrs={}) => `<div class="widget" data-widget="${name}"${Object.entries(attrs).map(([k,v])=>` data-${k}="${esc(v)}"`).join('')}></div>`;
 const STEPS = items => `<ol class="steps">${items.map(s=>`<li>${s}</li>`).join('')}</ol>`;
 const KEYS = (...k) => k.map(x=>`<kbd>${x}</kbd>`).join('+');
-const DL_WORKBOOK = `<a class="btn small" href="downloads/ironbridge-leisure.xlsx" download data-testid="download-workbook">Download the workbook</a>`;
+const DL_WORKBOOK = `<a class="btn small" href="downloads/sparta-leisure.xlsx" download data-testid="download-workbook">Download the workbook</a>`;
 
 /* ----- Static figures ----- */
 // Normal distribution with the 68 / 95 / 99.7 rule
@@ -35,7 +35,7 @@ const FIG_SKEW = (() => {
   const panel=(dx, skew, title, order)=>`<g transform="translate(${dx},0)"><text x="130" y="18" text-anchor="middle" class="sk-h">${title}</text><path d="${curve(skew)}" class="nd-line"/><line x1="20" y1="150" x2="240" y2="150" class="axis"/><text x="130" y="172" text-anchor="middle" class="ax">${order}</text></g>`;
   return `<figure class="figure"><svg viewBox="0 0 560 182" role="img" aria-label="Positive skew has its long tail to the right; negative skew has its long tail to the left.">
 ${panel(10, 1, 'Positive skew: tail to the right', 'Mode < Median < Mean (usually)')}${panel(290, -1, 'Negative skew: tail to the left', 'Mean < Median < Mode (usually)')}</svg>
-<figcaption>The tail points the way of the skew. Visit lengths at Ironbridge are positively skewed: most visits are about an hour, and a few are much longer.</figcaption></figure>`;
+<figcaption>The tail points the way of the skew. Visit lengths at Sparta Leisure are positively skewed: most visits are about an hour, and a few are much longer.</figcaption></figure>`;
 })();
 // ETL and ELT pipelines
 const FIG_ETL = (() => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Sparta Global Data Concepts: a learning path with Excel practice, quizzes and a capstone project on the Ironbridge Leisure dataset.",
+  "description": "Sparta Global Data Concepts: a learning path with Excel practice, quizzes and a capstone project on the Sparta Leisure dataset.",
   "scripts": {
     "check": "node scripts/check.mjs",
     "build": "node scripts/check.mjs && node scripts/build.mjs",

@@ -16,7 +16,7 @@ The site is a **single static HTML file** with an **Excel formula engine inside 
                           every file into one
 ```
 
-- **Everything runs in the browser.** `src/engine.js` parses and evaluates Excel formulas against the Ironbridge data,
+- **Everything runs in the browser.** `src/engine.js` parses and evaluates Excel formulas against the Sparta Leisure data,
   which is embedded in the page as JSON.
 - **No server, no framework, no dependencies.** The UI is plain JavaScript that builds DOM elements with a small `h()`
   helper, the same pattern as the SQL Practice Lab.

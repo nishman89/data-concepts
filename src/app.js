@@ -573,7 +573,7 @@ function drawIntro(){ $('#introBody').innerHTML=SITE_INTRO; $('#introStart').onc
 let dataView=null;
 function drawData(){
   const b=$('#dataBody'); if (!b.childElementCount) b.innerHTML=DATA_INTRO;
-  const e=$('#dataErd'); if (!e.childElementCount) renderERD(e, DATA_ERD, {testPrefix:'data-erd', label:'How the Ironbridge Leisure sheets link'});
+  const e=$('#dataErd'); if (!e.childElementCount) renderERD(e, DATA_ERD, {testPrefix:'data-erd', label:'How the Sparta Leisure sheets link'});
   if (!dataView){ dataView=makeSheetView($('#dataSheets'),{sheet:'Sites', editable:false, testid:'data-sheet', onView:n=>{ if (!P.dataSheets.includes(n)){ P.dataSheets.push(n); save(); renderChrome(); } }}); }
   dataView.set({sheet:'Sites'});
   if (!P.dataSheets.includes('Sites')){ P.dataSheets.push('Sites'); save(); }
@@ -668,7 +668,7 @@ function renderLessonBody(){
   lView.set({sheet:ex.sheet, col:ex.col||'Answer', fill:!!ex.fill, vtype:ex.vtype||null, formula:P.drafts[draftKey()] ?? ''});
   lView.showFill(false);
 }
-const DL_WORKBOOK_NODE = () => h('a',{class:'btn small',href:'downloads/ironbridge-leisure.xlsx',download:'','data-testid':'download-workbook'},'Download the workbook');
+const DL_WORKBOOK_NODE = () => h('a',{class:'btn small',href:'downloads/sparta-leisure.xlsx',download:'','data-testid':'download-workbook'},'Download the workbook');
 function drawReveal(){
   const ex=LESSONS[curLesson].ex[curTab], r=$('#lReveal'); r.innerHTML='';
   $('#bHint').textContent=reveal.hint?'Hide the hint':'Show a hint'; $('#bSol').textContent=reveal.sol?'Hide the answer':'Show the answer';

@@ -1,5 +1,5 @@
 /* ---------- Excel formula engine ----------
-   Evaluates Excel formulas against the Ironbridge Leisure workbook. No DOM here, so scripts/check.mjs runs the same
+   Evaluates Excel formulas against the Sparta Leisure workbook. No DOM here, so scripts/check.mjs runs the same
    code in Node. A sheet is { name, cols:[{name,type}], rows:[[…]] }: row 1 is the header, data starts on row 2.
    Values are numbers, strings, booleans, null (blank) or XErr. Dates are Excel serial numbers (days since 30/12/1899). */
 class XErr { constructor(code, why){ this.code=code; this.why=why||''; } toString(){ return this.code; } }

@@ -1,5 +1,5 @@
 /* ---------- Capstone project ----------
-   Learners clean and analyse the raw 2026 export (public/downloads/ironbridge-capstone.zip) in Excel, with Power BI
+   Learners clean and analyse the raw 2026 export (public/downloads/sparta-leisure-capstone.zip) in Excel, with Power BI
    optional. The "check your numbers" figures come from data/capstone_facts.json, written by scripts/generate_data.py. */
 const CAP_Q = (n, task, check, revise) => `<li class="cap-q" data-testid="capstone-q-${n.replace('.','-')}"><div class="cap-n">${n}</div><div><p>${task}</p>${check?`<div class="cap-check"><b>Check your numbers</b>${check}</div>`:''}${revise?`<p class="cap-revise">Revise: ${revise}</p>`:''}</div></li>`;
 const REV = (id) => `<a href="#/lesson/${id}">${LESSONS[id].title}</a>`;
@@ -7,7 +7,7 @@ const N = n => Number(n).toLocaleString('en-GB');
 const CF = CAP_FACTS;
 
 const CAPSTONE_HTML = `
-<p class="lede">Ironbridge Leisure's board meets next month. The council has offered to part-fund an investment, and the board wants answers backed by data. You've been given a raw export from the company's systems for January to September 2026. Clean it, analyse it, and present your recommendations.</p>
+<p class="lede">Sparta Leisure's board meets next month. The council has offered to part-fund an investment, and the board wants answers backed by data. You've been given a raw export from the company's systems for January to September 2026. Clean it, analyse it, and present your recommendations.</p>
 
 <section class="cap-before" data-testid="capstone-brief">
   <h2>The board's three questions</h2>
@@ -19,7 +19,7 @@ const CAPSTONE_HTML = `
 </section>
 
 <h2 class="dot">Before you start</h2>
-<p><a class="btn primary" href="downloads/ironbridge-capstone.zip" download data-testid="capstone-download">Download the capstone data (ZIP)</a></p>
+<p><a class="btn primary" href="downloads/sparta-leisure-capstone.zip" download data-testid="capstone-download">Download the capstone data (ZIP)</a></p>
 <p>Unzip it. Inside are:</p>
 <table class="mini"><tr><th>File</th><th>Holds</th></tr>
 <tr><td><code>members.csv</code></td><td>every member who joined up to 30 September 2026</td></tr>
@@ -33,10 +33,10 @@ ${TIP('Use Excel on a Windows or Mac computer: <strong>Data &gt; Get Data</stron
 
 <h2 class="dot">What you'll hand in</h2>
 <table class="mini"><tr><th>File</th><th>Contains</th></tr>
-<tr><td><code>ironbridge-analysis.xlsx</code></td><td>Your cleaned data, one sheet per table, with a <strong>Cleaning log</strong> sheet, your analysis, and a <strong>Dashboard</strong> sheet</td></tr>
+<tr><td><code>sparta-leisure-analysis.xlsx</code></td><td>Your cleaned data, one sheet per table, with a <strong>Cleaning log</strong> sheet, your analysis, and a <strong>Dashboard</strong> sheet</td></tr>
 <tr><td><code>star-schema.png</code> (or PDF)</td><td>A diagram of your data model</td></tr>
 <tr><td><code>recommendations.pptx</code> (or a 2-page report)</td><td>Your answers to the board's three questions: no more than 8 slides, for a 10-minute presentation</td></tr>
-<tr><td><code>ironbridge.pbix</code> (optional)</td><td>A Power BI report on the same data</td></tr></table>
+<tr><td><code>sparta-leisure.pbix</code> (optional)</td><td>A Power BI report on the same data</td></tr></table>
 
 <h2 class="dot">Stage 1: Import and profile</h2>
 <p class="cap-when">Uses <strong>Unit 2</strong> and <strong>Unit 3</strong></p>
@@ -61,7 +61,7 @@ ${CAP_Q('2.5', 'Check <strong>validity</strong> and <strong>referential integrit
 <p class="cap-when">Uses <strong>Unit 4</strong> and <strong>Unit 9</strong></p>
 <ol class="cap-list">
 ${CAP_Q('3.1', 'Use lookups to bring the details you need into your visits and bookings sheets: each member\'s plan and age band, and each site\'s name and capacity.', null, REV('lookups'))}
-${CAP_Q('3.2', 'Draw a <strong>star schema</strong> for Ironbridge, with visits as the fact table. Show the dimension tables, their keys, and the grain of the fact table. Add a sentence on how a snowflake schema would differ.', null, REV('warehouses'))}
+${CAP_Q('3.2', 'Draw a <strong>star schema</strong> for Sparta Leisure, with visits as the fact table. Show the dimension tables, their keys, and the grain of the fact table. Add a sentence on how a snowflake schema would differ.', null, REV('warehouses'))}
 </ol>
 
 <h2 class="dot">Stage 4: Analyse</h2>
@@ -84,7 +84,7 @@ ${CAP_Q('5.2', 'For each of your own findings in Stage 4, note one alternative e
 <p class="cap-when">Uses <strong>Unit 4</strong> and <strong>Unit 8</strong></p>
 <ol class="cap-list">
 ${CAP_Q('6.1', 'Build a one-screen <strong>Dashboard</strong> sheet from pivot charts, with slicers for site and plan connected to every chart. Choose each chart for the relationship it shows, and follow the design advice: no 3D, no truncated bar axes, colour used consistently and accessibly.', null, REV('dashboards'))}
-${CAP_Q('6.2', 'Write your <strong>recommendations</strong>: one slide (or section) per board question, each with a clear answer, the evidence for it, and how confident you are. Finish with what data Ironbridge should start collecting.', null, REV('good-viz'))}
+${CAP_Q('6.2', 'Write your <strong>recommendations</strong>: one slide (or section) per board question, each with a clear answer, the evidence for it, and how confident you are. Finish with what data Sparta Leisure should start collecting.', null, REV('good-viz'))}
 </ol>
 
 <div class="cap-optional" data-testid="capstone-power-bi"><b>Optional: Power BI.</b> Load your cleaned tables into Power BI Desktop, create the relationships to match your star schema in the <strong>Model</strong> view, and build a report page that answers one of the board's questions. Power BI makes the star schema real: the visits table sits in the middle, and filters flow out from the dimensions.</div>

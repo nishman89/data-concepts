@@ -27,7 +27,7 @@ const UNITS = [
 const LESSONS = {
 /* ===================== Unit 1 ===================== */
 intro:{ kind:'intro', title:'How this site works', summary:'The learning path, practising Excel here or in Excel itself, and saving your progress.' },
-data:{ kind:'data', title:'Meet Ironbridge Leisure', summary:'Six leisure centres, nine sheets of data, and how they link together.' },
+data:{ kind:'data', title:'Meet Sparta Leisure', summary:'Six leisure centres, nine sheets of data, and how they link together.' },
 
 /* ===================== Unit 2 ===================== */
 types:{ title:'Data types', summary:'Numeric and non-numeric, continuous, discrete and categorical, Boolean, dates and times, and key-value pairs.',
@@ -38,7 +38,7 @@ learn:`
 <p><strong>Non-numeric</strong> data is qualitative: text, made of any characters. In programming it's called a <strong>string</strong>, such as <code>SiteName</code> = Telford Central.</p>
 ${TIP('A number isn\'t always numeric data. A phone number or a member ID is made of digits, but adding two phone numbers together means nothing. Store those as text.')}
 <h2 class="dot">Continuous, discrete and categorical</h2>
-<table class="mini"><tr><th>Type</th><th>What it means</th><th>At Ironbridge</th></tr>
+<table class="mini"><tr><th>Type</th><th>What it means</th><th>At Sparta Leisure</th></tr>
 <tr><td><strong>Continuous</strong></td><td>Numeric data measured on a scale. It can be split into finer and finer amounts, as precise as your measuring allows.</td><td><code>AvgTempC</code>, a visit's exact length, a member's height</td></tr>
 <tr><td><strong>Discrete</strong></td><td>Counted in whole units that can't be split further and still mean something.</td><td><code>Capacity</code>, <code>MaxPlaces</code>, the number of visits</td></tr>
 <tr><td><strong>Categorical</strong></td><td>Grouped into categories. Usually text, sometimes coded as numbers.</td><td><code>PlanCode</code>, <code>Gender</code>, <code>Category</code>, <code>Intensity</code></td></tr></table>
@@ -64,7 +64,7 @@ has_pool: true
 classes: [Spin, Yoga, Aqua Fit]</pre>
 <p>Key-value pairs are behind dictionaries and hash tables in programming, JSON and YAML files, and NoSQL databases.</p>`,
 check:[
-  {q:'Which Ironbridge column holds <strong>continuous</strong> data?', a:['<code>PlanCode</code>','<code>AvgTempC</code>','<code>Capacity</code>','<code>HasPool</code>'], c:1, why:'Temperature is measured on a scale and can be as precise as the thermometer allows. Capacity is a count (discrete), PlanCode is a category and HasPool is a Boolean.'},
+  {q:'Which Sparta Leisure column holds <strong>continuous</strong> data?', a:['<code>PlanCode</code>','<code>AvgTempC</code>','<code>Capacity</code>','<code>HasPool</code>'], c:1, why:'Temperature is measured on a scale and can be as precise as the thermometer allows. Capacity is a count (discrete), PlanCode is a category and HasPool is a Boolean.'},
   {q:'<code>Intensity</code> holds Low, Medium or High. What kind of data is it?', a:['Continuous','Discrete numeric','Categorical, with an order (ordinal)','Boolean'], c:2, why:'It\'s categorical because each value is a group, and ordinal because the groups have a natural order.'},
   {q:'A member\'s phone number, 07700900123, should be stored as…', a:['an integer, because it\'s all digits','a decimal','text (a string)','a Boolean'], c:2, why:'You never do arithmetic on a phone number, and storing it as a number loses the leading zero. Store it as text.'},
   {q:'In Excel, what is the date 2 January 2025 if 1 January 2025 is 45658?', a:['45659','45658.5','2025-01-02 as text','It can\'t be worked out'], c:0, why:'Each day adds 1 to the serial number.'},
@@ -72,7 +72,7 @@ check:[
 ]},
 formats:{ title:'File formats', summary:'TXT, CSV, XLSX, JSON, YAML, XML and DAT: what each one is and when you\'ll meet it.',
 learn:`
-<p>Data moves between systems in files, and each format has its strengths. Below are the same three Ironbridge members in five formats. Compare how each one marks where a value starts and ends.</p>
+<p>Data moves between systems in files, and each format has its strengths. Below are the same three Sparta Leisure members in five formats. Compare how each one marks where a value starts and ends.</p>
 ${W('formats')}
 <table class="mini"><tr><th>Format</th><th>What it is</th><th>You'll meet it when…</th></tr>
 <tr><td><code>.txt</code></td><td>Plain, unformatted text. Any program can open it.</td><td>reading logs, notes and simple exports</td></tr>
@@ -126,7 +126,7 @@ functions:{ title:'Everyday functions', summary:'SUM, AVERAGE, MIN, MAX, COUNT, 
 learn:`
 <p>A function is a ready-made calculation. You give it <strong>arguments</strong> in brackets, separated by commas, and it returns a result. Excel has over 400 of them, listed under <strong>Formulas &gt; Function Library</strong>.</p>
 <p><code>=SUM(E2:E50)</code> adds up E2 to E50. <code>=SUM(E:E)</code> adds up the whole of column E, however many rows it has, and ignores the text heading in E1. Whole columns save you from updating ranges when data is added.</p>
-${F('=SUM(E:E)','Visits',{note:'Every minute spent in an Ironbridge gym in 2025.'})}
+${F('=SUM(E:E)','Visits',{note:'Every minute spent in a Sparta Leisure gym in 2025.'})}
 <table class="mini"><tr><th>Function</th><th>Returns</th></tr>
 <tr><td><code>SUM</code></td><td>the total</td></tr>
 <tr><td><code>AVERAGE</code></td><td>the mean: the total divided by how many numbers there are</td></tr>
@@ -177,7 +177,7 @@ ex:[
   {p:'Work out each member\'s **age on 31 December 2025**, in whole years.', sheet:'Members', fill:true, col:'Age', sol:'=DATEDIF(E2,DATE(2025,12,31),"Y")', hint:'DATEDIF(date of birth, end date, "Y"). Build the end date with DATE(2025,12,31).', askRow:5},
   {p:'On the **Visits** sheet, show the **name of the day** each visit happened, such as Monday.', sheet:'Visits', fill:true, col:'Day', sol:'=TEXT(D2,"dddd")', hint:'TEXT(date, "dddd") gives the full day name. "ddd" gives Mon, Tue…'},
   {p:'On the **Visits** sheet, show the **hour** each member checked in (0 to 23).', sheet:'Visits', fill:true, col:'Hour', sol:'=HOUR(D2)', hint:'CheckIn (column D) holds a date and a time. HOUR pulls out the hour.'},
-  {p:'Make an **email username** for each member: their member ID in lower case, followed by `@ironbridge.example`.', sheet:'Members', fill:true, col:'Email', sol:'=LOWER(A2)&"@ironbridge.example"', hint:'LOWER(A2), then & and the rest in double quotes.'},
+  {p:'Make an **email username** for each member: their member ID in lower case, followed by `@spartaleisure.example`.', sheet:'Members', fill:true, col:'Email', sol:'=LOWER(A2)&"@spartaleisure.example"', hint:'LOWER(A2), then & and the rest in double quotes.'},
 ]},
 logic:{ title:'Logical functions', summary:'IF, AND, OR, NOT and nested IFs: formulas that make decisions.', sheet:'Visits',
 learn:`
@@ -233,7 +233,7 @@ check:[
 /* ===================== Unit 4: Excel for analysis ===================== */
 lookups:{ title:'Lookups: joining sheets', summary:'VLOOKUP, HLOOKUP, XLOOKUP and INDEX with MATCH: bring data from one sheet into another.', sheet:'Members',
 learn:`
-<p>Ironbridge's data is split across sheets that link through shared codes, just like tables in a database. The Members sheet has each member's <code>PlanCode</code>, but the fee is on the Plans sheet. A <strong>lookup</strong> uses the code to fetch the fee.</p>
+<p>Sparta Leisure's data is split across sheets that link through shared codes, just like tables in a database. The Members sheet has each member's <code>PlanCode</code>, but the fee is on the Plans sheet. A <strong>lookup</strong> uses the code to fetch the fee.</p>
 <h2 class="dot">VLOOKUP</h2>
 <pre class="code">=VLOOKUP(what to find, table, column number, FALSE)</pre>
 <p>VLOOKUP looks <strong>down the first column</strong> of the table for what you're finding, then returns the value from the column number you give, counting the first column as 1. Always finish with <code>FALSE</code> for an exact match.</p>
@@ -287,7 +287,7 @@ ex:[
   {p:'How many **minutes** did members spend at **Wolverhampton City** (S03)?', sheet:'Visits', sol:'=SUMIFS(E:E,C:C,"S03")', hint:'SUMIFS(the minutes, the SiteID column, "S03").'},
   {p:'What was the **average visit length at Shrewsbury Riverside** (S02)? Round it to 1 decimal place.', sheet:'Visits', sol:'=ROUND(AVERAGEIFS(E:E,C:C,"S02"),1)', hint:'AVERAGEIFS(E:E, C:C, "S02"), inside ROUND( … , 1).'},
   {p:'What fraction of class bookings were **attended**? Give it as a decimal.', sheet:'Bookings', sol:'=COUNTIF(G:G,TRUE)/(COUNTA(G:G)-1)', hint:'COUNTIF(G:G, TRUE) counts the attended ones. Divide by the number of bookings: COUNTA(G:G)-1.'},
-  {p:'How much did Ironbridge spend on **marketing in January 2025**, across all sites?', sheet:'SiteMonths', sol:'=SUMIFS(F:F,B:B,DATE(2025,1,1))', hint:'Each Month cell holds the 1st of the month. SUMIFS(F:F, B:B, DATE(2025,1,1)).'},
+  {p:'How much did Sparta Leisure spend on **marketing in January 2025**, across all sites?', sheet:'SiteMonths', sol:'=SUMIFS(F:F,B:B,DATE(2025,1,1))', hint:'Each Month cell holds the 1st of the month. SUMIFS(F:F, B:B, DATE(2025,1,1)).'},
   {p:'On the **Sites** sheet, count **how many members** each site has. Fill it down to build a summary table.', sheet:'Sites', fill:true, col:'Members', sol:'=COUNTIF(Members!$G:$G,A2)', hint:'COUNTIF(Members!$G:$G, A2). The criteria is the SiteID in the same row.'},
 ]},
 'sort-filter':{ title:'Sorting and filtering', summary:'Put data in order, and show only the rows you need.', sheet:'Visits', excel:true,
@@ -362,7 +362,7 @@ learn:`
 <h2 class="dot">Mode</h2>
 <p>The <strong>mode</strong> is the value that appears most often, a bit like a vote where the winner takes all. It's always a value that's really in the data, and it's the only average that works for categories ("the most popular plan"). There can be more than one mode, or none at all.</p>
 ${F('=AVERAGE(E:E)','Visits')}${F('=MEDIAN(E:E)','Visits')}${F('=MODE.SNGL(E:E)','Visits')}
-<p>Ironbridge's mean visit is longer than its median. A handful of very long visits pull the mean up, while the median stays put. You'll see why in the Distributions lesson.</p>
+<p>Sparta Leisure's mean visit is longer than its median. A handful of very long visits pull the mean up, while the median stays put. You'll see why in the Distributions lesson.</p>
 <h2 class="dot">Other averages</h2>
 <table class="mini"><tr><th>Average</th><th>Used for</th><th>Excel</th></tr>
 <tr><td>Geometric mean</td><td>growth rates and percentages, such as a fee rising by different amounts each year</td><td><code>GEOMEAN</code></td></tr>
@@ -388,7 +388,7 @@ ${F('=STDEV.P(E:E)','Visits')}
 <p>Excel has two versions. <code>STDEV.P</code> is for a whole <strong>population</strong>: every visit in 2025. <code>STDEV.S</code> is for a <strong>sample</strong> drawn from a bigger population, and divides by the count minus 1 to make up for the missing data. With thousands of values the two are almost the same.</p>
 <p>For data with a <strong>normal distribution</strong>, the SD tells you a lot:</p>
 ${FIG_NORMAL}
-${TIP('Like the mean, the SD is easily skewed by outliers. A few 10-hour "visits" from people who forgot to check out make Ironbridge\'s SD much bigger than it would otherwise be.')}`,
+${TIP('Like the mean, the SD is easily skewed by outliers. A few 10-hour "visits" from people who forgot to check out make Sparta Leisure\'s SD much bigger than it would otherwise be.')}`,
 ex:[
   {p:'What is the **standard deviation** of visit lengths? Treat the visits as a whole population.', sheet:'Visits', sol:'=STDEV.P(E:E)', hint:'STDEV.P(E:E). STDEV.S gives almost the same answer here, and is also accepted.'},
   {p:'What is the **range** of visit lengths?', sheet:'Visits', sol:'=MAX(E:E)-MIN(E:E)', hint:'MAX minus MIN.'},
@@ -433,7 +433,7 @@ ${F('=CORREL(F:F,C:C)','SiteMonths',{note:'Marketing spend against new members.'
 <p><strong>R²</strong> (r squared) is often used instead, as a percentage between 0 and 100%. It's worked out from how far each point is from the line of best fit, and it's the share of the variation in one variable that the other can explain. R² = 75% means 75% of the changes in y can be accounted for by changes in x, and vice versa: R² can't tell you which one causes which.</p>
 ${F('=RSQ(C:C,F:F)','SiteMonths')}
 <h2 class="dot">Correlation does not imply causation</h2>
-<p>Two things moving together doesn't mean one causes the other. Both might be driven by a third thing, or it might be chance. At Ironbridge, colder months have more new members. The cold doesn't make people join: January is cold, and January is when people make New Year's resolutions. Marketing spend is also highest in January. So how much of that strong correlation is marketing, and how much is January?</p>
+<p>Two things moving together doesn't mean one causes the other. Both might be driven by a third thing, or it might be chance. At Sparta Leisure, colder months have more new members. The cold doesn't make people join: January is cold, and January is when people make New Year's resolutions. Marketing spend is also highest in January. So how much of that strong correlation is marketing, and how much is January?</p>
 <p>Tyler Vigen's <a href="http://tylervigen.com/spurious-correlations" target="_blank" rel="noopener">spurious correlations</a> collects real data that correlates by pure coincidence.</p>`,
 ex:[
   {p:'What is the correlation (r) between **marketing spend** and **new members**?', sheet:'SiteMonths', sol:'=CORREL(F:F,C:C)', hint:'CORREL(MarketingSpend, NewMembers): columns F and C.'},
@@ -447,7 +447,7 @@ quality:{ title:'Data quality', summary:'Validity, accuracy, completeness, consi
 learn:`
 <p><strong>Data quality</strong> is how well data represents the real situation it describes. Poor-quality data leads to wrong answers, however clever the analysis. Before cleaning anything, find out what's wrong.</p>
 <h2 class="dot">Spot the problems</h2>
-<p>Here's <strong>MembersRaw</strong>, an extract from Ironbridge's old membership system. Look through it and note every problem you can find before reading on.</p>
+<p>Here's <strong>MembersRaw</strong>, an extract from Sparta Leisure's old membership system. Look through it and note every problem you can find before reading on.</p>
 ${W('sheet',{sheet:'MembersRaw'})}
 <h2 class="dot">Six dimensions of data quality</h2>
 <table class="mini"><tr><th>Dimension</th><th>The degree to which…</th><th>In MembersRaw</th></tr>
@@ -525,7 +525,7 @@ learn:`
 </div>`,
 check:[
   {q:'A supplement company funds a study that finds its product boosts gym performance. Which part of SIMPLE should you check first?', a:['Presentation','Source','Irrelevant','Evidence'], c:1, why:'Who collected the data and who gains from it are Source questions. Funding doesn\'t make a study wrong, but it\'s a reason to look harder at the method.'},
-  {q:'A chart of Ironbridge\'s new members starts its y-axis at 90 instead of 0, so a small rise looks huge. Which part of SIMPLE is this?', a:['Missing','Alternatives','Presentation','Source'], c:2, why:'The data may be right, but the axis exaggerates the change. That\'s presentation.'},
+  {q:'A chart of Sparta Leisure\'s new members starts its y-axis at 90 instead of 0, so a small rise looks huge. Which part of SIMPLE is this?', a:['Missing','Alternatives','Presentation','Source'], c:2, why:'The data may be right, but the axis exaggerates the change. That\'s presentation.'},
   {q:'"Our new yoga classes might be why visits rose." Is that an assertion or a supposition?', a:['An assertion','A supposition','A fact','An opinion'], c:1, why:'"Might be" makes it a supposition. An assertion would say "is why".'},
   {q:'A report on UK gym habits uses only data from 2015. Which question does that raise?', a:['Is it relevant to today?','Is the chart the right type?','Is it an opinion?','Is it uniform?'], c:0, why:'Data from the wrong time period may not be relevant to the question you\'re answering.'},
 ]},
@@ -540,10 +540,10 @@ learn:`
 <details><summary>Some alternatives</summary><p>Dorset's farmers may have been better off to begin with, and the weather, soil, crops or prices may have differed. Did the farmers who chose to take part differ from those who didn't? And would West Midlands soils and crops respond the same way? Compare incomes <em>before and after</em>, against similar farmers who didn't take part.</p></details></div>
 <div class="scen"><p><b>3.</b> A law makes it compulsory for cyclists to wear helmets. Over the next two years, the number of head injuries among cyclists halves. <em>Therefore, the law has improved safety for cyclists.</em></p>
 <details><summary>Some alternatives</summary><p>Maybe fewer people cycled once helmets were compulsory, so there were fewer injuries of every kind. Roads, cycle lanes or the way injuries were recorded may have changed too. Look at injuries <em>per mile cycled</em>, and at other kinds of injury.</p></details></div>
-<h2 class="dot">An Ironbridge example</h2>
+<h2 class="dot">A Sparta Leisure example</h2>
 <p>The marketing team writes: <em>"January sign-ups were more than four times December's. Our New Year campaign worked."</em> Before you agree, what would you check? Every January is busy for gyms, so compare January with January the year before, and look at what happened in years with a smaller campaign. You'll test exactly this claim in the capstone project.</p>`,
 check:[
-  {q:'After a summer price cut, Ironbridge\'s visits fell. The finance team says the price cut put people off. What\'s the strongest alternative explanation?', a:['Summer is usually quieter for gyms','The price cut was too small','Visits are always recorded wrongly','Members prefer higher prices'], c:0, why:'Gym visits dip every summer. Compare the summer with previous summers before blaming the price cut.'},
+  {q:'After a summer price cut, Sparta Leisure\'s visits fell. The finance team says the price cut put people off. What\'s the strongest alternative explanation?', a:['Summer is usually quieter for gyms','The price cut was too small','Visits are always recorded wrongly','Members prefer higher prices'], c:0, why:'Gym visits dip every summer. Compare the summer with previous summers before blaming the price cut.'},
   {q:'What data would best test whether the New Year campaign raised January sign-ups?', a:['January\'s sign-ups only','January sign-ups compared with Januaries in years with smaller campaigns','The number of adverts','December\'s visits'], c:1, why:'Comparing like with like (January against January) removes the seasonal effect. Then you can see what the extra campaign added.'},
   {q:'A study compares people who chose to join a running club with people who didn\'t, and finds the members are healthier. Why can\'t we say the club made them healthier?', a:['Healthier people may be more likely to join in the first place','Running is bad for you','The sample was too large','Clubs keep poor records'], c:0, why:'People chose whether to join, so the groups were probably different before they started. This is called selection bias.'},
 ]},
@@ -625,13 +625,13 @@ check:[
 pipelines:{ title:'Pipelines and databases', summary:'ETL and ELT, OLTP and OLAP, and the ACID rules that keep transactions safe.',
 learn:`
 <h2 class="dot">ETL and ELT</h2>
-<p>Data rarely stays where it's created. A <strong>pipeline</strong> moves it from source systems, such as Ironbridge's check-in gates, booking app and payment system, to somewhere it can be analysed.</p>
+<p>Data rarely stays where it's created. A <strong>pipeline</strong> moves it from source systems, such as Sparta Leisure's check-in gates, booking app and payment system, to somewhere it can be analysed.</p>
 ${FIG_ETL}
 <p><strong>ETL</strong> (extract, transform, load) cleans and reshapes data on the way, so only tidy, structured data is stored. <strong>ELT</strong> (extract, load, transform) loads the raw data first and transforms it inside the storage system when it's needed. That has become practical as storage got cheaper and more powerful.</p>
 <h2 class="dot">OLTP and OLAP</h2>
 <table class="mini"><tr><th></th><th>OLTP: online transaction processing</th><th>OLAP: online analytical processing</th></tr>
 <tr><td>Purpose</td><td>run the business: record every <strong>transaction</strong>, meaning any change to the database</td><td>understand the business: extract business intelligence from OLTP data</td></tr>
-<tr><td>At Ironbridge</td><td>a member checks in, a payment is taken, a class is booked</td><td>visits by site by month, cancellation rates by plan</td></tr>
+<tr><td>At Sparta Leisure</td><td>a member checks in, a payment is taken, a class is booked</td><td>visits by site by month, cancellation rates by plan</td></tr>
 <tr><td>Design</td><td>highly <strong>normalised</strong>: each fact stored once</td><td>adds a layer of abstraction and aggregation. A semantic model describes what each element means, and data from several sources is combined across many dimensions in an <strong>OLAP cube</strong>.</td></tr>
 <tr><td>Workload</td><td>heavy write, light read</td><td>heavy read, light write</td></tr></table>
 <h2 class="dot">ACID</h2>
@@ -642,7 +642,7 @@ ${FIG_ETL}
 <tr><td><strong>Isolation</strong></td><td>transactions running at the same time give the same result as if they'd run one after another, so two people can't book the last place in a class</td></tr>
 <tr><td><strong>Durability</strong></td><td>once committed, a transaction survives a system failure, because it's written to non-volatile storage</td></tr></table>`,
 check:[
-  {q:'Ironbridge loads raw check-in logs into cheap storage and cleans them only when an analyst needs them. Is this ETL or ELT?', a:['ETL','ELT','OLTP','ACID'], c:1, why:'Load first, transform later: ELT.'},
+  {q:'Sparta Leisure loads raw check-in logs into cheap storage and cleans them only when an analyst needs them. Is this ETL or ELT?', a:['ETL','ELT','OLTP','ACID'], c:1, why:'Load first, transform later: ELT.'},
   {q:'Which system records each check-in at the gate as it happens?', a:['OLAP','OLTP','A data mart','A slicer'], c:1, why:'Recording transactions as they happen is OLTP: heavy write, light read.'},
   {q:'A member pays for a membership, but the system crashes before the membership is created, and the payment is undone. Which ACID property is this?', a:['Atomicity','Isolation','Durability','Consistency'], c:0, why:'The payment and the membership are one transaction. If part of it fails, all of it fails.'},
 ]},
@@ -662,7 +662,7 @@ ${W('schema')}
 <p>Design a star schema, then a snowflake schema, for a video rental shop (think Blockbuster). Queries will use: the time and date, the customer's name, age and gender, the employee who served them, the product's name and type (DVD, Blu-ray, PS4…), the length of the loan, the return date and the amount paid. What is the fact table's grain?</p>
 <p>Further reading: <a href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/" target="_blank" rel="noopener">Kimball's dimensional modelling techniques</a>, and the example data warehouses documented by <a href="https://dataedo.com" target="_blank" rel="noopener">Dataedo</a>.</p>`,
 check:[
-  {q:'In Ironbridge\'s star schema, which table is the fact table?', a:['Sites','Visits','Plans','Dates'], c:1, why:'Visits records events and holds a measurement, DurationMins. The others describe who, where and when.'},
+  {q:'In Sparta Leisure\'s star schema, which table is the fact table?', a:['Sites','Visits','Plans','Dates'], c:1, why:'Visits records events and holds a measurement, DurationMins. The others describe who, where and when.'},
   {q:'What makes a snowflake schema different from a star schema?', a:['It has no fact table','Its dimension tables are normalised into further tables','It only works in Excel','It stores unstructured data'], c:1, why:'A snowflake splits dimensions into more tables, such as Member → Plan, which reduces redundancy.'},
   {q:'A fact table has one row per member per day. What is this called?', a:['Its grain','Its schema','Its slicer','Its mart'], c:0, why:'The grain is the level of detail of one row.'},
   {q:'Which approach builds separate data marts first, then combines them?', a:['Inmon','Kimball','ELT','OLTP'], c:1, why:'Kimball\'s approach is bottom-up, starting with data marts.'},
@@ -681,12 +681,12 @@ learn:`
 <tr><td>Users</td><td>apps and staff</td><td>analysts and managers</td><td>data scientists and engineers</td><td>all of these</td></tr>
 <tr><td>Cost</td><td>moderate</td><td>higher</td><td>low</td><td>low to moderate</td></tr></table>`,
 check:[
-  {q:'Ironbridge wants to keep every raw gate log, app event and CCTV still, in case they\'re useful one day. Where should they go?', a:['An OLTP database','A data lake','A data mart','An Excel workbook'], c:1, why:'A lake stores raw, structured and unstructured data cheaply, to be processed when needed.'},
+  {q:'Sparta Leisure wants to keep every raw gate log, app event and CCTV still, in case they\'re useful one day. Where should they go?', a:['An OLTP database','A data lake','A data mart','An Excel workbook'], c:1, why:'A lake stores raw, structured and unstructured data cheaply, to be processed when needed.'},
   {q:'What does schema-on-read mean?', a:['The structure is applied when the data is used','Data must be cleaned before it\'s stored','Only structured data is allowed','Reading data changes it'], c:0, why:'In a lake the data is stored as it is, and given structure when someone reads it.'},
   {q:'What does a lakehouse add to a data lake?', a:['Warehouse-style structure and ACID transactions','Paper records','Pie charts','Only unstructured data'], c:0, why:'A lakehouse adds tables, structure and ACID guarantees on top of cheap lake storage.'},
 ]},
 
-capstone:{ kind:'capstone', title:'Capstone project', summary:'Clean, analyse and present the Ironbridge Leisure export, then make recommendations to the board.' },
+capstone:{ kind:'capstone', title:'Capstone project', summary:'Clean, analyse and present the Sparta Leisure export, then make recommendations to the board.' },
 };
 
 /* Spread the right answers of Check yourself questions across the options (a fixed rotation, so it's stable) */
