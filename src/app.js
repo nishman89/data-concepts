@@ -466,12 +466,14 @@ function lessonProg(id){
   const L=LESSONS[id]; let a=0, b=0;
   if (L.ex){ b+=L.ex.length; a+=L.ex.filter((_,i)=>P.exDone[id+'.'+i]).length; }
   if (L.check){ b+=1; a+=P.checkDone[id]?1:0; }
+  if (L.tasks){ b+=L.tasks.length; a+=L.tasks.filter((_,i)=>(P.tasks||{})[id+'.'+i]).length; }
   return [a,b];
 }
 const markedDone = id => !!(P.markedDone||{})[id];
 const autoDone = id => { const [a,b]=lessonProg(id); return a>=b; };
 const lessonDone = id => autoDone(id) || markedDone(id);
-const nextLesson = () => PATH.find(x=>!lessonDone(x.id));
+const REQUIRED = PATH.filter(x=>!x.unit.optional);
+const nextLesson = () => REQUIRED.find(x=>!lessonDone(x.id));
 
 /* ---------- Routing ---------- */
 const VIEWS=['path','intro','data','capstone','lesson','practice','quizzes','quiz'];
@@ -527,7 +529,7 @@ function renderChrome(){
   const setMark = v => { P.markedDone=P.markedDone||{}; if (v) P.markedDone[id]=true; else delete P.markedDone[id]; save(); refreshChrome(); toast(v?'Marked as complete':'No longer marked as complete'); };
   const mark = auto ? null : manual ? h('button',{class:'btn small ghost',type:'button','data-testid':'unmark-complete',onclick:()=>setMark(false)},'Undo: mark as not complete')
     : h('button',{class:'btn small mark',type:'button','data-testid':'mark-complete',onclick:()=>setMark(true)},'✓ Mark lesson as complete');
-  const need = FOUND[id] ? FOUND[id].need : [L.ex?`solve all ${L.ex.length} exercises (${L.ex.filter((_,i)=>P.exDone[id+'.'+i]).length} done)`:null, L.check?'answer every Check yourself question correctly':null].filter(Boolean).join(', and ')+'.';
+  const need = FOUND[id] ? FOUND[id].need : [L.tasks?'tick everything in the checklist':null, L.ex?`solve all ${L.ex.length} ${L.noGrid?'tasks':'exercises'} (${L.ex.filter((_,i)=>P.exDone[id+'.'+i]).length} done)`:null, L.check?'answer every Check yourself question correctly':null].filter(Boolean).join(', and ')+'.';
   const state = done ? h('div',{class:'state ok','data-testid':'lesson-status','data-done':'true'}, manual&&!auto?'Marked as complete.':'Lesson complete.', mark?' ':'', mark||'')
     : h('div',{class:'state','data-testid':'lesson-status','data-done':'false'}, FOUND[id]?`To complete this lesson: ${need}`:`To complete this lesson, ${need}`, h('span',{class:'or'},' Or '), mark);
   const nexts=h('div',{class:'nexts'}, h('button',{class:'btn ghost',type:'button','data-go':'path'},'Home'));
@@ -540,13 +542,13 @@ function refreshChrome(){ renderChrome(); if (current.view==='lesson') renderLes
 /* ---------- Home: the learning path ---------- */
 function renderPath(){
   const v=$('#v-path'); v.innerHTML='';
-  const doneL=PATH.filter(x=>lessonDone(x.id)).length, nxt=nextLesson();
-  const exTotal=PATH.reduce((n,x)=>n+((LESSONS[x.id].ex||[]).length),0), exDone=Object.keys(P.exDone).filter(k=>P.exDone[k]&&LESSONS[k.split('.')[0]]).length;
+  const doneL=REQUIRED.filter(x=>lessonDone(x.id)).length, nxt=nextLesson();
+  const exTotal=REQUIRED.reduce((n,x)=>n+((LESSONS[x.id].ex||[]).length),0), exDone=Object.keys(P.exDone).filter(k=>P.exDone[k]&&REQUIRED.some(x=>x.id===k.split('.')[0])).length;
   const card=h('div',{class:'hero-card','data-testid':'continue-card'});
   card.append(h('div',{class:'k'}, nxt?(doneL?'Continue with':'Start with'):'Path complete'), h('div',{class:'next'}, nxt?LESSONS[nxt.id].title:'You\'ve finished every lesson. Try the final quiz.'));
   const trail=h('div',{class:'trail','aria-hidden':'true'});
-  UNITS.forEach((u,ui)=>{ if (ui) trail.append(h('b')); u.lessons.forEach(id=>trail.append(h('i',{class:(lessonDone(id)?'d ':'')+(nxt&&nxt.id===id?'n':''),title:LESSONS[id].title}))); });
-  card.append(trail, h('div',{class:'hero-stats','data-testid':'overall-progress'}, `${doneL} of ${PATH.length} lessons complete. ${exDone} of ${exTotal} Excel exercises solved.`),
+  UNITS.filter(u=>!u.optional).forEach((u,ui)=>{ if (ui) trail.append(h('b')); u.lessons.forEach(id=>trail.append(h('i',{class:(lessonDone(id)?'d ':'')+(nxt&&nxt.id===id?'n':''),title:LESSONS[id].title}))); });
+  card.append(trail, h('div',{class:'hero-stats','data-testid':'overall-progress'}, `${doneL} of ${REQUIRED.length} lessons complete. ${exDone} of ${exTotal} Excel exercises solved.`),
     h('div',{}, nxt ? h('button',{class:'btn primary',type:'button','data-go':nxt.id,'data-testid':'continue'}, doneL?'Continue':'Start the path') : h('button',{class:'btn primary',type:'button','data-go':'quiz/final'},'Final quiz')));
   v.append(h('div',{class:'path-hero'}, card));
   const ha=$('#heroActions'); ha.innerHTML='';
@@ -561,14 +563,14 @@ function renderPath(){
     u.lessons.forEach(id=>{
       const L=LESSONS[id]; num++;
       const isDone=lessonDone(id), isNext=nxt&&nxt.id===id, [a,b]=lessonProg(id);
-      const status = isDone?'Done' : isNext?'Up next' : a>0 ? (FOUND[id]?'Started':`${a} of ${b} done`) : FOUND[id]?FOUND[id].label : L.ex ? `${L.ex.length} exercises${L.excel?' in Excel':''}` : `Read and ${L.check.length} questions`;
+      const status = isDone?'Done' : isNext?'Up next' : a>0 ? (FOUND[id]?'Started':`${a} of ${b} done`) : FOUND[id]?FOUND[id].label : L.tasks ? 'Set-up checklist' : L.ex ? `${L.ex.length} ${L.noGrid?'tasks':'exercises'}${L.excel||L.noGrid?' in Excel':''}` : `Read and ${L.check.length} questions`;
       const node=h('span',{class:'node','aria-hidden':'true'}, isDone?h('span',{class:'tick'}):h('span',{},String(num)));
       ol.append(h('li',{class:(isDone?'done ':'')+(isNext?'next':''),'data-testid':`lesson-${id}`},
         h('a',{href:'#/lesson/'+id}, node, h('span',{class:'t'}, L.title, h('small',{},L.summary)), h('span',{class:'s','data-testid':`lesson-status-${id}`},status))));
     });
     const uq=QUIZZES.find(q=>q.unitQuiz===ui+1), rec=uq&&P.quizzes[uq.id];
-    v.append(h('section',{class:'unit','aria-label':`Unit ${ui+1}: ${u.title}`,'data-testid':`unit-${ui+1}`},
-      h('div',{class:'unit-h'}, h('div',{class:'n'},`Unit ${ui+1}`), h('h2',{},u.title), h('p',{},u.blurb), h('div',{class:'meta'}, `${u.lessons.filter(lessonDone).length} of ${u.lessons.length} lessons complete`),
+    v.append(h('section',{class:'unit'+(u.optional?' optional':''),'aria-label':`Unit ${ui+1}: ${u.title}`,'data-testid':`unit-${ui+1}`},
+      h('div',{class:'unit-h'}, h('div',{class:'n'},`Unit ${ui+1}`, u.optional?h('span',{class:'opt-badge'},'Optional'):null), h('h2',{},u.title), h('p',{},u.blurb), h('div',{class:'meta'}, `${u.lessons.filter(lessonDone).length} of ${u.lessons.length} lessons complete`),
         uq ? h('div',{class:'unit-quiz'}, h('button',{class:'btn small',type:'button','data-go':'quiz/'+uq.id,'data-testid':`unit-quiz-${ui+1}`},`Unit ${ui+1} quiz`), h('span',{class:'small'}, rec?`Best ${rec.best.percent}%`:`${uq.questions.length} questions`)) : null),
       ol));
   });
@@ -626,7 +628,7 @@ function openLesson(id){
   const L=LESSONS[id];
   if (curLesson!==id){ curLesson=id; curTab='learn'; }
   $('#lTitle').textContent=L.title; $('#lSummary').textContent=L.summary;
-  const excelLesson=!!L.ex;
+  const excelLesson=!!L.ex && !L.noGrid;
   $('#lGrid').classList.toggle('single', !excelLesson); $('#lSide').hidden=!excelLesson;
   if (excelLesson && !lView) lView=makeSheetView($('#lSheet'),{sheet:L.sheet||'Members', testid:'lesson-sheet', onRun:onLessonRun, onChange:v=>{ P.drafts[draftKey()]=v; save(); }});
   renderLessonTabs(); renderLessonBody();
@@ -636,10 +638,11 @@ function renderLessonTabs(){
   const L=LESSONS[curLesson], t=$('#lTabs'); t.innerHTML='';
   t.hidden=!L.ex;
   if (!L.ex) return;
+  const word=L.noGrid?'Task':'Exercise';
   ['learn',...L.ex.map((_,i)=>i)].forEach(k=>{
     const done = k!=='learn' && P.exDone[curLesson+'.'+k];
     const b=h('button',{type:'button',role:'tab','aria-selected':String(curTab===k),class:done?'done':'','data-testid':k==='learn'?'tab-learn':`tab-exercise-${k+1}`},
-      k==='learn'?'Learn':[h('span',{class:'dotc','aria-hidden':'true'}), `Exercise ${k+1}`, done?h('span',{class:'sr'},' (solved)'):null]);
+      k==='learn'?'Learn':[h('span',{class:'dotc','aria-hidden':'true'}), `${word} ${k+1}`, done?h('span',{class:'sr'},' (solved)'):null]);
     b.addEventListener('click',()=>setTab(k)); t.append(b);
   });
 }
@@ -661,22 +664,30 @@ function renderLessonBody(){
       const saved=(P.checks[curLesson]=P.checks[curLesson]||{}), id=curLesson;
       renderCheck(form, L.check, 'lesson-check', saved, (qi,ai)=>{ saved[qi]=ai; P.checkDone[id]=L.check.every((x,i)=>saved[i]===x.c); save(); refreshChrome(); });
     }
+    if (L.tasks){
+      const ul=h('ul',{class:'cap-checklist','data-testid':'setup-checklist'}); P.tasks=P.tasks||{};
+      L.tasks.forEach((t,k)=>{ const key=curLesson+'.'+k, cb=h('input',{type:'checkbox',id:'task-'+k,'data-testid':'setup-task-'+(k+1),checked:!!P.tasks[key]});
+        cb.addEventListener('change',()=>{ P.tasks[key]=cb.checked; save(); refreshChrome(); }); ul.append(h('li',{}, h('label',{for:'task-'+k}, cb, h('span',{html:t})))); });
+      body.append(h('div',{class:'rule'}), h('h2',{class:'dot'},'Your checklist'), ul);
+    }
     if (L.ex){
-      body.append(h('p',{style:'margin-top:26px'}, h('button',{class:'btn primary',type:'button','data-testid':'start-exercises',onclick:()=>setTab(0)}, `Start the exercises (${L.ex.length})`)));
+      body.append(h('p',{style:'margin-top:26px'}, h('button',{class:'btn primary',type:'button','data-testid':'start-exercises',onclick:()=>setTab(0)}, `Start the ${L.noGrid?'tasks':'exercises'} (${L.ex.length})`)));
+      if (L.noGrid) return;
       const ex0=$('.fx-ex',body);
       lView.set({sheet:L.sheet||L.ex[0].sheet, col:'Try it', fill:false, formula:P.drafts[draftKey()] ?? '', vtype:null});
       lView.showFill(true);
     }
     return;
   }
-  const i=curTab, ex=L.ex[i], mode = (ex.excel||L.excel) ? (P.modeSet&&P.modeSet[curLesson+'.'+i] || 'excel') : P.mode;
+  const i=curTab, ex=L.ex[i], mode = L.noGrid ? 'excel' : (ex.excel||L.excel) ? (P.modeSet&&P.modeSet[curLesson+'.'+i] || 'excel') : P.mode;
   body.dataset.solution=ex.sol;
-  body.append(h('div',{class:'ex-num','data-testid':'exercise-number'}, `Exercise ${i+1} of ${L.ex.length}`));
+  body.append(h('div',{class:'ex-num','data-testid':'exercise-number'}, `${L.noGrid?'Task':'Exercise'} ${i+1} of ${L.ex.length}`));
   if (P.exDone[curLesson+'.'+i]) body.append(h('div',{class:'solved','data-testid':'solved'},'Solved'));
   body.append(h('p',{class:'ex-prompt','data-testid':'exercise-prompt'}, ...fmtPrompt(ex.p)));
   const toggle=h('div',{class:'mode-toggle',role:'group','aria-label':'How do you want to answer?'});
   [['here','Practise here'],['excel','In Excel']].forEach(([k,l])=>toggle.append(h('button',{type:'button','aria-pressed':String(mode===k),'data-testid':`mode-${k}`,onclick:()=>{ if (ex.excel||L.excel){ P.modeSet=P.modeSet||{}; P.modeSet[curLesson+'.'+i]=k; } else P.mode=k; save(); renderLessonBody(); }},l)));
-  body.append(toggle);
+  if (!L.noGrid) body.append(toggle);
+  if (ex.steps) body.append(h('ol',{class:'steps','data-testid':'task-steps'}, ex.steps.map(t=>h('li',{html:t}))));
   const panel=h('div',{class:'mode-panel','data-testid':`mode-panel-${mode}`});
   body.append(panel);
   if (mode==='here'){
@@ -689,13 +700,14 @@ function renderLessonBody(){
     const inp=h('input',{type:'text',class:'answer-input',id:'excelAnswer','aria-label':'Your answer','data-testid':'excel-answer',placeholder:ph,value:P.drafts[draftKey()+':x']||''});
     const go=()=>{ P.drafts[draftKey()+':x']=inp.value; save(); const v=markTyped(ex, inp.value); showVerdict(v); };
     inp.addEventListener('keydown',e=>{ if (e.key==='Enter') go(); });
-    panel.append(h('div',{class:'excel-box'}, h('p',{}, DL_WORKBOOK_NODE(), ' ', h('span',{class:'small muted'},`Open the ${ex.sheet} sheet.`)), h('label',{for:'excelAnswer',class:'q-instr'}, ask), h('div',{class:'answer-row'}, inp, h('button',{class:'btn primary',type:'button','data-testid':'check-answer',onclick:go},'Check'))), h('div',{id:'lVerdict'}));
+    panel.append(h('div',{class:'excel-box'}, L.noGrid ? null : h('p',{}, DL_WORKBOOK_NODE(), ' ', h('span',{class:'small muted'},`Open the ${ex.sheet} sheet.`)), h('label',{for:'excelAnswer',class:'q-instr'}, ex.ask || ask), h('div',{class:'answer-row'}, inp, h('button',{class:'btn primary',type:'button','data-testid':'check-answer',onclick:go},'Check'))), h('div',{id:'lVerdict'}));
   }
   body.append(h('div',{class:'ex-actions'},
     h('button',{class:'btn small',type:'button',id:'bHint','data-testid':'show-hint',onclick:()=>{ reveal.hint=!reveal.hint; drawReveal(); }},'Show a hint'),
     h('button',{class:'btn small',type:'button',id:'bSol','data-testid':'show-answer',onclick:()=>{ reveal.sol=!reveal.sol; drawReveal(); }},'Show the answer')));
   body.append(h('div',{id:'lReveal'}));
-  if (i===0) body.append(h('p',{class:'small'}, 'Stuck? The ', h('button',{type:'button',class:'linkish',onclick:()=>setTab('learn')},'Learn tab'), ' has worked examples you can try.'));
+  if (i===0 && !L.noGrid) body.append(h('p',{class:'small'}, 'Stuck? The ', h('button',{type:'button',class:'linkish',onclick:()=>setTab('learn')},'Learn tab'), ' has worked examples you can try.'));
+  if (L.noGrid) return;
   lView.set({sheet:ex.sheet, col:ex.col||'Answer', fill:!!ex.fill, vtype:ex.vtype||null, formula:P.drafts[draftKey()] ?? ''});
   lView.showFill(false);
 }
@@ -706,6 +718,7 @@ function drawReveal(){
   if (reveal.hint) r.append(h('div',{class:'reveal','data-testid':'hint'}, h('b',{},'Hint: '), ...fmtPrompt(ex.hint)));
   if (reveal.sol){
     const want=expectedAt(ex);
+    if (ex.how){ r.append(h('div',{class:'reveal','data-testid':'answer'}, h('b',{},'How to do it: '), h('span',{html:ex.how}), h('p',{class:'small'}, 'The answer is ', h('b',{},fmtVal(want, ex.vtype)), '.'))); return; }
     r.append(h('div',{class:'reveal','data-testid':'answer'}, h('b',{},'One possible formula'), h('pre',{},ex.sol),
       h('p',{class:'small'}, ex.fill?`In row ${askRow(ex)} it gives `:'It gives ', h('b',{},fmtVal(want, ex.vtype)), '.'),
       h('button',{class:'btn small',type:'button','data-testid':'copy-answer',onclick:()=>{ P.mode==='excel'&&!(ex.excel)?null:null; lView.set({formula:ex.sol}); lView.focus(); }},'Copy into the grid')));
@@ -726,7 +739,7 @@ function showVerdict(v){
     const was=lessonDone(curLesson); if (!P.exDone[curLesson+'.'+i]){ P.exDone[curLesson+'.'+i]=true; save(); }
     const k=PATH.findIndex(x=>x.id===curLesson); let btn=null, sub=v.rounded?'That\'s right, to the precision you gave.':'That matches the expected answer.';
     if (lessonDone(curLesson) && !was){ sub='That\'s the last one. Lesson complete.'; btn=k<PATH.length-1?h('button',{class:'btn small primary',type:'button','data-go':PATH[k+1].id},'Next lesson'):null; toast('Lesson complete'); }
-    else { const j=nextUnsolved(i); if (j!=null) btn=h('button',{class:'btn small primary',type:'button',onclick:()=>setTab(j)},`Exercise ${j+1}`); else if (k<PATH.length-1) btn=h('button',{class:'btn small primary',type:'button','data-go':PATH[k+1].id},'Next lesson'); }
+    else { const j=nextUnsolved(i); if (j!=null) btn=h('button',{class:'btn small primary',type:'button',onclick:()=>setTab(j)},`${L.noGrid?'Task':'Exercise'} ${j+1}`); else if (k<PATH.length-1) btn=h('button',{class:'btn small primary',type:'button','data-go':PATH[k+1].id},'Next lesson'); }
     box.append(h('div',{}, 'Correct.', h('span',{},sub)));
     if (btn){ btn.setAttribute('data-testid','verdict-next'); btn.style.marginLeft='auto'; box.append(btn); box.style.alignItems='center'; }
     if (!$('.solved',$('#lBody'))) $('.ex-num',$('#lBody')).after(h('div',{class:'solved','data-testid':'solved'},'Solved'));

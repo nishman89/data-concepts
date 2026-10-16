@@ -28,7 +28,7 @@ for (const [id, L] of Object.entries(S.LESSONS)){
   if (L.kind) continue;
   if (!L.title || !L.summary) err(id, 'needs a title and a summary');
   if (!L.learn) err(id, 'needs a learn tab');
-  if (!L.ex && !L.check) err(id, 'needs exercises (ex) or questions (check)');
+  if (!L.ex && !L.check && !L.tasks) err(id, 'needs exercises (ex), questions (check) or a checklist (tasks)');
   (L.ex || []).forEach((ex, i) => { const w = `${id} exercise ${i + 1}`; if (!ex.p || !ex.hint) err(w, 'needs p and hint'); checkTask(w, ex); if (ex.fill && !ex.col) warnings.push(`${w}: has no col name, so the column is called Answer`); });
   (L.check || []).forEach((q, i) => { const w = `${id} question ${i + 1}`; if (!q.q || !q.why || !Array.isArray(q.a) || q.a.length < 2) err(w, 'needs q, why and at least two options in a'); if (!(q.c >= 0 && q.c < (q.a||[]).length)) err(w, 'c must be the index of the right option'); if (new Set(q.a).size !== (q.a||[]).length) err(w, 'has two identical options'); });
   // Formula examples in the Learn tab must run too

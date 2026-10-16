@@ -915,3 +915,5 @@ svg.erd .tbl.fact .tbl-head{fill:var(--pink)}
 .tcard{border-top-color:var(--tc)}
 @media (max-width:560px){ .trec-r{grid-template-columns:minmax(0,1fr) auto} .trec-v{grid-column:1/-1;grid-row:2} }
 .tcard-cols .linklike{font-weight:600;font-size:.92rem;text-decoration-thickness:1px}
+
+.opt-badge{display:inline-block;margin-left:8px;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--ink);color:#fff;border-radius:999px;padding:2px 8px;vertical-align:middle}
