@@ -68,8 +68,13 @@ const LESSONS = { lookups:{ title, summary, sheet, learn:`…html…`, ex:[ { p,
 const PATH    = UNITS.flatMap(…);   // every lesson in order
 ```
 
-A lesson has exercises (`ex`), questions (`check`), or both (Formula errors). Lessons with `ex` show the practice grid
-beside the text; others use the full width. `kind: 'intro' | 'data' | 'capstone'` gives a lesson its own page.
+A lesson has exercises (`ex`), questions (`check`), a checklist (`tasks`), or a mix (Formula errors has both
+exercises and questions). Lessons with `ex` show the practice grid beside the text, unless they're `noGrid` (the
+Power Query unit, which is done entirely in Excel, so every exercise is a typed answer with `steps`, `ask` and `how`).
+`kind: 'intro' | 'data' | 'capstone'` gives a lesson its own page.
+
+**Optional units.** `optional: true` on a unit adds an Optional badge. `REQUIRED` in `app.js` (every lesson not in an
+optional unit) drives "Continue", the progress trail and the lesson and exercise counts on the home page.
 
 **Helpers in lesson text** (`src/content/helpers.js`): `F(formula, sheet, {fill, col, note})` adds a runnable formula
 example, `TIP()` a tip, `NOTE()` a callout, `TABS([{label, html}])` tabs, `STEPS([…])` a numbered list, and
@@ -174,6 +179,7 @@ Everything is in one object, `P`, saved to `localStorage['dataConcepts.v1']`:
 | `mode`, `modeSet` | Practise here or In Excel (the learner's choice; Excel-only exercises remember it per exercise) |
 | `quizzes` | Per quiz: `{ attempts, best, last }` |
 | `introDone`, `dataSheets`, `capstone`, `markedDone` | The Foundations pages, the capstone checklist, and lessons ticked by hand |
+| `tasks` | Ticked checklist items, keyed `<lessonId>.<index>` |
 
 `lessonProg(id)` counts exercises solved plus one for an all-correct check. `FOUND` holds the rules for the three
 special pages. If the shape of `P` ever changes incompatibly, change the key to `dataConcepts.v2`.
@@ -193,7 +199,12 @@ A seeded generator (numpy, `default_rng(2026)`) builds the whole company, so the
 - **The capstone export** (2026) is the same company nine months later, with different problems: a double export,
   check-out times before check-in, forgotten check-outs, orphaned member IDs, phone numbers without their leading zero,
   a site exporting UK-style text dates, Booleans written four ways, and JSON and XML files. The generator counts what
-  it planted into `data/capstone_facts.json`, which the capstone page quotes.
+  it planted into `data/capstone_facts.json`, which the capstone page quotes. It also includes `sites.csv` and
+  `bookings.csv`, so the capstone can be done without Power Query.
+- **The Power Query practice data** is the 2025 lesson data in raw form: `members.json` with messy name case, spaces and
+  lower-case plan codes, one visits CSV per site (Walsall's with UK-style text dates, Wolverhampton's with 150 rows
+  exported twice), `plans.csv` and `sites.xml`. Cleaned correctly, every answer equals a formula on the lesson
+  workbook, which is how the tasks are checked.
 
 The generated files are committed, so the build needs only Node.
 
@@ -208,6 +219,7 @@ and fails the build if:
 
 - a unit lists a lesson that doesn't exist, or a lesson twice
 - a lesson has no title, summary or learn text, or no exercises or questions
+- every column of the main sheets has exactly one type in `DATA_TYPES` (for the Data types lesson)
 - an exercise has no prompt or hint, uses an unknown sheet, or its model formula gives an error (on any filled row it
   checks), or its `askRow` is invalid
 - a formula example (`F()`) in a lesson gives an error
