@@ -892,3 +892,26 @@ svg.chart .lbl{font:700 12px var(--f-body)}
 svg.erd .tbl.fact .tbl-head{fill:var(--pink)}
 .data-dialog{width:min(1100px,96vw)}
 @media (max-width:700px){ .w-quad{grid-template-columns:minmax(0,1fr)} .xl-scroll{max-height:60vh} }
+
+/* Data types: the record explorer and type cards */
+.trec{background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:6px 14px;margin:10px 0 8px}
+.trec-h{font-weight:700;font-size:.85rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line)}
+.trec-r{display:grid;grid-template-columns:minmax(7rem,10rem) minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.trec-r:last-child{border-bottom:0}
+.trec-c{background:none;padding:0;font-size:.85rem}
+.trec-v{font-family:var(--f-mono);font-size:.9rem;overflow-wrap:anywhere} .trec-v.blank{color:var(--muted);font-style:italic}
+.tchip{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;border:1.5px solid}
+.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:12px;margin:0 0 18px}
+.tcard{background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;border-top:5px solid}
+.tcard h3{margin:0 0 4px;font-size:1.05rem}
+.tcard p{margin:0 0 8px}
+.tcard-cols{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:2px 12px}
+.tcard-cols li.on .linklike{color:var(--ink);text-decoration:none;font-weight:700}
+.tcard-vals{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.85rem;border-top:1px solid var(--line);padding-top:8px}
+.tcard-vals code{font-size:.8rem}
+.t-id{--tc:#5c6b73} .t-text{--tc:#6b5b95} .t-nominal{--tc:#1f6fb2} .t-ordinal{--tc:#0f7c86} .t-discrete{--tc:#b5541b}
+.t-continuous{--tc:#a3346a} .t-bool{--tc:#2f7d32} .t-date{--tc:#8a6d00} .t-time{--tc:#7a4f00} .t-datetime{--tc:#5d4037}
+.tchip{color:var(--tc);border-color:var(--tc);background:color-mix(in srgb,var(--tc) 9%,transparent)}
+.tcard{border-top-color:var(--tc)}
+@media (max-width:560px){ .trec-r{grid-template-columns:minmax(0,1fr) auto} .trec-v{grid-column:1/-1;grid-row:2} }
+.tcard-cols .linklike{font-weight:600;font-size:.92rem;text-decoration-thickness:1px}

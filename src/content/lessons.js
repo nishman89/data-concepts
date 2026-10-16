@@ -33,6 +33,9 @@ data:{ kind:'data', title:'Meet Sparta Leisure', summary:'Six leisure centres, n
 types:{ title:'Data types', summary:'Numeric and non-numeric, continuous, discrete and categorical, Boolean, dates and times, and key-value pairs.',
 learn:`
 <p>Before you analyse anything, work out what <em>kind</em> of data each column holds. The type decides which calculations make sense, which charts work, and how the data should be stored.</p>
+<h2 class="dot">One record, many types</h2>
+<p>Here's a real row from Sparta Leisure's data, with every value labelled. Switch sheets, or show another row, and notice how one record mixes several types. Each type is explained below.</p>
+${W('typerecord')}
 <h2 class="dot">Numeric and non-numeric</h2>
 <p><strong>Numeric</strong> data is quantitative: it's only numbers, so you can do arithmetic with it. Whole numbers are <strong>integers</strong> (<code>Capacity</code> is 220) and numbers with a decimal point are <strong>decimals</strong>, or floats (<code>MonthlyFee</code> is 32.99).</p>
 <p><strong>Non-numeric</strong> data is qualitative: text, made of any characters. In programming it's called a <strong>string</strong>, such as <code>SiteName</code> = Telford Central.</p>
@@ -56,6 +59,10 @@ ${TIP('A number isn\'t always numeric data. A phone number or a member ID is mad
 <p>Excel stores a date as a <strong>serial number</strong>: the number of days since 31 December 1899. 1 January 2025 is 45658, and a time is a fraction of a day, so 18:00 is 0.75. This is why you can subtract one date from another to get the number of days between them.</p>
 ${F('=DATE(2025,1,1)','Members',{note:'Try it: this gives a serial number. Excel shows it as a date only because of the cell\'s format.'})}
 ${TIP('The safest format to share dates in is <strong>ISO 8601</strong>: <code>2025-01-31</code>. It sorts correctly as text, and no one can confuse the day and the month.')}
+<h2 class="dot">Every type in Sparta Leisure's data</h2>
+<p>Each card shows the columns of one type, with real values from the workbook. Select a column to see more of its values.</p>
+${W('typecards')}
+${TIP('Some columns could go either way. <code>DurationMins</code> is time, which is continuous, but it\'s recorded in whole minutes, so it looks discrete. <code>MonthlyFee</code> is money, which only goes down to a penny. Treat a measured amount as continuous when its unit is small compared with its values: it will still make sense to average it and draw it as a histogram.')}
 <h2 class="dot">Key-value pairs</h2>
 <p>A key-value pair (KVP) links two pieces of data. The <strong>key</strong> is a unique label, and the <strong>value</strong> is the data it identifies. Some keys have one value, and some can have several:</p>
 <pre class="code">site_id: S01
@@ -68,6 +75,8 @@ check:[
   {q:'<code>Intensity</code> holds Low, Medium or High. What kind of data is it?', a:['Continuous','Discrete numeric','Categorical, with an order (ordinal)','Boolean'], c:2, why:'It\'s categorical because each value is a group, and ordinal because the groups have a natural order.'},
   {q:'A member\'s phone number, 07700900123, should be stored as…', a:['an integer, because it\'s all digits','a decimal','text (a string)','a Boolean'], c:2, why:'You never do arithmetic on a phone number, and storing it as a number loses the leading zero. Store it as text.'},
   {q:'In Excel, what is the date 2 January 2025 if 1 January 2025 is 45658?', a:['45659','45658.5','2025-01-02 as text','It can\'t be worked out'], c:0, why:'Each day adds 1 to the serial number.'},
+  {q:'<code>CheckIn</code> on the Visits sheet holds values like <code>01/01/2025 06:01</code>. What type is it?', a:['Date','Time','Datetime','Text'], c:2, why:'It holds a date and a time together, so it\'s a datetime.'},
+  {q:'Which column is <strong>ordinal</strong> data?', a:['<code>Category</code> (Cardio, Strength…)','<code>Intensity</code> (Low, Medium, High)','<code>Town</code>','<code>PlanCode</code>'], c:1, why:'Low, Medium and High have a natural order. The others are groups with no order, which is nominal data.'},
   {q:'Which is a key-value pair?', a:['<code>Telford Central</code>','<code>town: Telford</code>','<code>TRUE</code>','<code>45658</code>'], c:1, why:'<code>town</code> is the key and <code>Telford</code> is its value.'},
 ]},
 formats:{ title:'File formats', summary:'TXT, CSV, XLSX, JSON, YAML, XML and DAT: what each one is and when you\'ll meet it.',

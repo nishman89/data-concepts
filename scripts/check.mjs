@@ -39,6 +39,11 @@ for (const [id, L] of Object.entries(S.LESSONS)){
     if (r.error || (S.isErr(r.value) && !/VLOOKUP/.test(f))) err(id, `example ${f} gives ${(r.error || r.value).code} ${(r.error || r.value).why}`);
   }
 }
+// Every column on the main sheets needs exactly one type for the Data types lesson
+for (const sh of S.WORKBOOK.sheets){ if (sh.name==='MembersRaw' || sh.name==='PriceHistory') continue;
+  for (const c of sh.cols){ const n = S.DATA_TYPES.filter(t => t.cols.some(([a,b]) => a===sh.name && b===c.name)).length;
+    if (n !== 1) err('DATA_TYPES', `${sh.name}.${c.name} is listed under ${n} types; it needs exactly 1`); } }
+for (const t of S.DATA_TYPES) for (const [a,b] of t.cols){ const sh=WB.sheet(a); if (!sh || !sh.cols.some(c=>c.name===b)) err('DATA_TYPES', `${a}.${b} doesn't exist`); }
 const ids = new Set();
 for (const q of S.QUIZZES){
   if (ids.has(q.id)) err(q.id, 'two quizzes share this id'); ids.add(q.id);

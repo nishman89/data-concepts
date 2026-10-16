@@ -9,6 +9,6 @@ export function load(){
   const read = p => fs.readFileSync(path.join(root, p), 'utf8');
   const src = `const WORKBOOK = ${read('data/workbook.json')};\nconst CAP_FACTS = ${read('data/capstone_facts.json')};\n`
     + read('src/engine.js') + '\n' + CONTENT_FILES.map(read).join('\n')
-    + '\n;({ WORKBOOK, CAP_FACTS, UNITS, LESSONS, PATH, QUIZZES, QUIZ_SETTINGS, CAPSTONE_TASKS, makeWorkbook, runFormula, sameValue, isErr, lastRow, displayValue });';
+    + '\n;({ WORKBOOK, CAP_FACTS, UNITS, LESSONS, PATH, QUIZZES, QUIZ_SETTINGS, CAPSTONE_TASKS, DATA_TYPES, makeWorkbook, runFormula, sameValue, isErr, lastRow, displayValue });';
   return vm.runInNewContext(src, { console }, { filename: 'site.js' });
 }

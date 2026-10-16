@@ -297,6 +297,37 @@ function chartFrame(W,H,m){ return {W,H,m, x0:m.l, x1:W-m.r, y0:H-m.b, y1:m.t}; 
 function niceTicks(lo, hi, n=5){ const span=hi-lo||1, step0=span/n, mag=10**Math.floor(Math.log10(step0)), step=[1,2,2.5,5,10].map(k=>k*mag).find(s=>s>=step0); const out=[]; for (let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(Math.round(v*1e6)/1e6); return out; }
 const WIDGETS = {
   sheet(el){ const v=makeSheetView(el,{sheet:el.dataset.sheet, editable:false, testid:'widget-sheet'}); v.set({sheet:el.dataset.sheet}); },
+  typerecord(el){
+    const typeOf = (sheet, col) => DATA_TYPES.find(t=>t.cols.some(([s2,c2])=>s2===sheet&&c2===col));
+    const SHEETS=['Members','Visits','Bookings','Sites','Classes','Plans','SiteMonths'];
+    let sheet='Members', row=0;
+    const tabs=h('div',{class:'dtabs',role:'group','aria-label':'Sheet'});
+    SHEETS.forEach(n=>tabs.append(h('button',{type:'button','aria-pressed':String(n===sheet),'data-testid':`typerecord-${n}`,onclick:()=>{ sheet=n; row=0; $$('button',tabs).forEach(b=>b.setAttribute('aria-pressed',String(b.textContent===n))); draw(); }},n)));
+    const box=h('div',{class:'trec','data-testid':'typerecord'});
+    const more=h('button',{class:'btn small',type:'button','data-testid':'typerecord-another',onclick:()=>{ const sh=WB.sheet(sheet); row=(row+1+Math.floor(Math.random()*Math.min(sh.rows.length-1,400)))%sh.rows.length; draw(); }},'Show another row');
+    el.append(tabs, box, h('p',{}, more));
+    const draw=()=>{
+      const sh=WB.sheet(sheet), r=sh.rows[row]; box.innerHTML='';
+      box.append(h('div',{class:'trec-h'}, `${sheet}, row ${row+2}`));
+      sh.cols.forEach((c,i)=>{ const t=typeOf(sheet,c.name), v=r[i];
+        box.append(h('div',{class:'trec-r'}, h('code',{class:'trec-c'},c.name), h('span',{class:'trec-v'+(v==null||v===''?' blank':'')}, v==null||v===''?'(blank)':displayValue(v,c.type)), t?h('span',{class:'tchip t-'+t.key},t.name):h('span')));
+      });
+    };
+    draw();
+  },
+  typecards(el){
+    const grid=h('div',{class:'tcards'});
+    const samples=(sheet,col,n)=>{ const sh=WB.sheet(sheet), i=sh.cols.findIndex(c=>c.name===col), out=[], seen=new Set();
+      for (const r of sh.rows){ const v=r[i]; if (v==null||v==='') continue; const d=displayValue(v, sh.cols[i].type); if (seen.has(d)) continue; seen.add(d); out.push(d); if (out.length>=n) break; } return out; };
+    for (const t of DATA_TYPES){
+      const list=h('ul',{class:'tcard-cols'});
+      const show=(sheet,col,li)=>{ $$('li',list).forEach(x=>x.classList.toggle('on',x===li)); vals.innerHTML=''; vals.append(h('span',{class:'small muted'},`${sheet}.${col}: `), ...samples(sheet,col,6).map(v=>h('code',{},v))); };
+      const vals=h('div',{class:'tcard-vals','aria-live':'polite'});
+      t.cols.forEach(([sheet,col],k)=>{ const li=h('li',{}, h('button',{type:'button',class:'linklike','data-testid':`typecard-${t.key}-${col}`,onclick:()=>show(sheet,col,li)}, col), h('span',{class:'small muted'},` ${sheet}`)); list.append(li); if (k===0) setTimeout(()=>show(sheet,col,li)); });
+      grid.append(h('article',{class:'tcard t-'+t.key,'data-testid':`typecard-${t.key}`}, h('h3',{},t.name), h('p',{class:'small'},t.blurb), list, vals));
+    }
+    el.append(grid);
+  },
   formats(el){
     const ms=WB.sheet('Members').rows.slice(0,3).map(r=>({id:r[0], first:r[1], last:r[2], plan:r[7], joined:fmtDate(r[8],'yyyy-mm-dd')}));
     const txt=ms.map(m=>`${m.first} ${m.last} joined on ${m.joined} on the ${m.plan} plan (member ${m.id}).`).join('\n');

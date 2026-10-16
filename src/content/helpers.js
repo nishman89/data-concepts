@@ -47,3 +47,28 @@ const FIG_ETL = (() => {
 ${row(10,'ETL',['Extract','Transform','Load','Warehouse'])}${row(75,'ELT',['Extract','Load','Transform','In the lake'])}</svg>
 <figcaption>ETL cleans and reshapes data before it's stored. ELT stores the raw data first and transforms it later, inside the storage system.</figcaption></figure>`;
 })();
+
+/* ----- Data types in the Sparta Leisure data (used by W('typerecord') and W('typecards') in the Data types lesson) -----
+   Each column belongs to one type. Sample values are read from the data, so they always match the workbook. */
+const DATA_TYPES = [
+  { key:'id', name:'Text: identifier', blurb:'A code that names one thing, such as one member. It\'s never used in a calculation, even when it\'s all digits.',
+    cols:[['Members','MemberID'],['Sites','SiteID'],['Visits','VisitID'],['Bookings','BookingID'],['Classes','ClassID'],['Plans','PlanCode'],['Visits','MemberID'],['Bookings','MemberID']] },
+  { key:'text', name:'Text (string)', blurb:'Free text: any characters, with no fixed list of values.',
+    cols:[['Members','FirstName'],['Members','LastName'],['Sites','SiteName'],['Members','Postcode'],['Classes','ClassName']] },
+  { key:'nominal', name:'Categorical: nominal', blurb:'One of a fixed set of groups, with no natural order. Count them, but don\'t average them. A short code like S01 or STD is a category too.',
+    cols:[['Members','PlanCode'],['Members','Status'],['Members','Gender'],['Classes','Category'],['Sites','Town'],['Members','HomeSiteID'],['Bookings','ClassID'],['Visits','SiteID'],['Bookings','SiteID'],['SiteMonths','SiteID'],['Plans','PlanName']] },
+  { key:'ordinal', name:'Categorical: ordinal', blurb:'Groups with a natural order. You can sort them, but the gaps between them aren\'t measured.',
+    cols:[['Classes','Intensity']] },
+  { key:'discrete', name:'Numeric: discrete', blurb:'Counted in whole units that can\'t be split and still mean something.',
+    cols:[['Sites','Capacity'],['Classes','MaxPlaces'],['Plans','ClassesPerMonth'],['SiteMonths','NewMembers'],['SiteMonths','Cancellations'],['SiteMonths','Visits'],['Plans','MinAge']] },
+  { key:'continuous', name:'Numeric: continuous', blurb:'Measured on a scale, and as precise as the measuring allows.',
+    cols:[['SiteMonths','AvgTempC'],['Visits','DurationMins'],['Classes','DurationMins'],['Sites','Latitude'],['Sites','Longitude'],['Plans','MonthlyFee'],['Plans','JoiningFee'],['SiteMonths','MarketingSpend']] },
+  { key:'bool', name:'Boolean', blurb:'Exactly two values: TRUE or FALSE.',
+    cols:[['Sites','HasPool'],['Bookings','Attended'],['Plans','PeakAccess'],['Plans','PoolAccess']] },
+  { key:'date', name:'Date', blurb:'A day, with no time. Excel stores it as a serial number.',
+    cols:[['Members','JoinDate'],['Members','DateOfBirth'],['Members','CancelDate'],['Sites','Opened'],['Bookings','ClassDate'],['SiteMonths','Month']] },
+  { key:'time', name:'Time', blurb:'A time of day, with no date. Excel stores it as a fraction of a day.',
+    cols:[['Bookings','StartTime']] },
+  { key:'datetime', name:'Datetime', blurb:'A date and a time together.',
+    cols:[['Visits','CheckIn']] },
+];
