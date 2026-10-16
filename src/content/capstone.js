@@ -25,11 +25,11 @@ const CAPSTONE_HTML = `
 <tr><td><code>members.csv</code></td><td>every member who joined up to 30 September 2026</td></tr>
 <tr><td><code>visits.csv</code></td><td>every gym check-in and check-out in 2026</td></tr>
 <tr><td><code>bookings.json</code></td><td>every class booking, from the booking system. <code>bookings.csv</code> is the same data, if your Excel can't import JSON.</td></tr>
-<tr><td><code>sites.xml</code></td><td>the six leisure centres</td></tr>
+<tr><td><code>sites.xml</code></td><td>the six leisure centres. <code>sites.csv</code> is the same data as CSV.</td></tr>
 <tr><td><code>plans.csv</code>, <code>classes.csv</code></td><td>the 2026 plans and the class menu</td></tr>
 <tr><td><code>marketing.csv</code></td><td>marketing spend by site and month, January 2025 to September 2026</td></tr></table>
 <p>The export has <strong>not</strong> been cleaned. Expect the kinds of problems from the <a href="#/lesson/quality">Data quality</a> unit, and some you haven't seen. The 2025 workbook from the lessons is useful too: it has a full year of data to compare against.</p>
-${TIP('Use Excel on a Windows or Mac computer: <strong>Data &gt; Get Data</strong> (Power Query) imports CSV, JSON and XML, and records your cleaning steps so you can repeat them. Excel for the web can open the CSV files but can\'t import JSON or XML. Power BI Desktop is optional (see the end of this brief).')}
+${TIP('Everything here can be done with the Excel you\'ve used in the lessons: open each CSV file, and use <code>bookings.csv</code> and <code>sites.csv</code>. If you\'ve done the optional <a href="#/lesson/pq-setup">Power Query</a> unit, use it instead: import the JSON and XML files with <strong>Data &gt; Get Data</strong>, and your cleaning steps are recorded so you can repeat them. Power BI Desktop is optional too (see the end of this brief).')}
 
 <h2 class="dot">What you'll hand in</h2>
 <table class="mini"><tr><th>File</th><th>Contains</th></tr>
@@ -41,7 +41,7 @@ ${TIP('Use Excel on a Windows or Mac computer: <strong>Data &gt; Get Data</stron
 <h2 class="dot">Stage 1: Import and profile</h2>
 <p class="cap-when">Uses <strong>Unit 2</strong> and <strong>Unit 3</strong></p>
 <ol class="cap-list">
-${CAP_Q('1.1', 'Import each file into its own sheet. Use Power Query (<strong>Data &gt; Get Data</strong>) for the JSON and XML files. Name the sheets after the files.', `members.csv has <strong>${N(CF.membersRowsRaw)}</strong> rows of data, visits.csv has <strong>${N(CF.visitsRowsRaw)}</strong>, and bookings.json has <strong>${N(CF.bookingsRows)}</strong> bookings.`, REV('formats'))}
+${CAP_Q('1.1', 'Open or import each file into its own sheet, and name the sheets after the files. Use <code>bookings.csv</code> and <code>sites.csv</code>, or import the JSON and XML files with Power Query if you\'ve done the optional unit. Watch the dates: when Excel opens a CSV it reads dates using your computer\'s settings, so check Walsall\'s <code>dd/mm/yyyy</code> dates came through correctly.', `members.csv has <strong>${N(CF.membersRowsRaw)}</strong> rows of data, visits.csv has <strong>${N(CF.visitsRowsRaw)}</strong>, and bookings.json has <strong>${N(CF.bookingsRows)}</strong> bookings.`, REV('formats'))}
 ${CAP_Q('1.2', 'For each table, write a short <strong>data dictionary</strong>: each column\'s name, its data type (numeric, categorical, Boolean, datetime…), and what it means. Note any column whose type Excel guessed wrongly.', null, REV('types'))}
 ${CAP_Q('1.3', 'Profile the data before changing anything. Count the blanks in each column, list the distinct values of the categorical columns (a pivot table makes this quick), and find each numeric column\'s minimum and maximum.', `<code>Phone</code> has <strong>${N(CF.membersPhoneMissingZero)}</strong> numbers that have lost their leading zero, and <code>Gender</code> is blank in <strong>${N(CF.membersBlankGender)}</strong> rows.`, REV('functions'))}
 </ol>

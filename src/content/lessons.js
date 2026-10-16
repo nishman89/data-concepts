@@ -22,6 +22,7 @@ const UNITS = [
   { title:'Data visualisation', blurb:'Choose the right chart, design it well, and use colour with care.', lessons:['good-viz','charts','colour'] },
   { title:'Data storage', blurb:'Pipelines, databases, warehouses, lakes and lakehouses.', lessons:['pipelines','warehouses','lakes'] },
   { title:'Capstone project', blurb:'Analyse a messy real-world export and present your recommendations.', lessons:['capstone'] },
+  { title:'Power Query', optional:true, blurb:'An optional extra: import, clean and combine data with steps Excel records and repeats for you. You\'ll need Excel installed on your computer.', lessons:['pq-setup','pq-import','pq-clean','pq-combine'] },
 ];
 
 const LESSONS = {
@@ -696,6 +697,162 @@ check:[
 ]},
 
 capstone:{ kind:'capstone', title:'Capstone project', summary:'Clean, analyse and present the Sparta Leisure export, then make recommendations to the board.' },
+
+/* ===================== Optional: Power Query ===================== */
+'pq-setup':{ title:'Set up Excel and Power Query', summary:'Install Excel on your computer, check Power Query is there, and download the practice data.',
+learn:`
+<p><strong>Power Query</strong> is Excel's tool for getting data in and cleaning it. Instead of editing cells, you build a list of <strong>steps</strong> (import this file, trim these names, remove duplicates…). Excel records the steps and can repeat all of them on new data with one click. The same tool is built into Power BI.</p>
+<p>This unit is optional, and it isn't needed for the capstone project. If you do it, though, you can use Power Query for the capstone's data. You'll need the <strong>desktop</strong> version of Excel, installed on your computer.</p>
+<h2 class="dot">1. Install Excel</h2>
+${STEPS([
+ 'Go to <a href="https://www.microsoft365.com" target="_blank" rel="noopener">microsoft365.com</a> and sign in with the work or college account your trainer has given you.',
+ 'Select <strong>Install apps</strong> (top right, or under <strong>Apps</strong>), then <strong>Microsoft 365 apps</strong>. Run the installer that downloads, and wait for it to finish. It installs Word, PowerPoint and the rest too.',
+ 'Open <strong>Excel</strong> from the Start menu (or Applications on a Mac), and sign in with the same account if it asks.',
+ 'If you can\'t install Office, or the account doesn\'t include it, ask your trainer before going any further.'])}
+${TIP('<strong>Excel for the web</strong>, the version in a browser, can\'t build these queries. Neither can the Excel app on a phone or tablet. You need Excel installed on a Windows PC or a Mac.')}
+<h2 class="dot">2. Check Power Query is there</h2>
+${STEPS([
+ 'Open a blank workbook.',
+ 'Select the <strong>Data</strong> tab. On the left you should see a group called <strong>Get &amp; Transform Data</strong>, with a <strong>Get Data</strong> button.',
+ 'Select <strong>Get Data &gt; From File</strong>. You should see <strong>From Text/CSV</strong>, <strong>From JSON</strong>, <strong>From XML</strong> and <strong>From Folder</strong>.',
+ 'To see your version, go to <strong>File &gt; Account</strong>. It should say <strong>Microsoft 365</strong>.'])}
+${TIP('These lessons are written for <strong>Excel for Windows</strong>. Excel for Mac (Microsoft 365) has Power Query too, but some options are missing or in different places. If a step isn\'t there on your Mac, work through it with someone using Windows.')}
+<h2 class="dot">3. Download the practice data</h2>
+<p>The practice data is Sparta Leisure's 2025 data in its raw form: a JSON file of members, one CSV of visits for each site, the plans as CSV, and the sites as XML. Some of it needs cleaning.</p>
+${`<p class="task-dl"><a class="btn small" href="downloads/sparta-leisure-powerquery.zip" download data-testid="download-pq">Download the practice data (ZIP)</a></p>`}
+${STEPS([
+ 'Save the ZIP somewhere you\'ll find it, such as your Documents folder.',
+ '<strong>Unzip it</strong>: right-click the ZIP and choose <strong>Extract All</strong> (on a Mac, double-click it). Power Query can\'t read files that are still inside a ZIP.',
+ 'Open the <strong>sparta-leisure-powerquery</strong> folder and check it has <code>members.json</code>, <code>plans.csv</code>, <code>sites.xml</code> and a <code>visits</code> folder with six CSV files.',
+ 'Don\'t move or rename the files once you start. Your queries remember where each file is.'])}
+<p>Open a new, blank Excel workbook and save it in the same folder, as <code>power-query-practice.xlsx</code>. You'll build every query in this unit in that one workbook.</p>`,
+tasks:[
+  'Excel is installed on my computer, and I\'m signed in',
+  'The <strong>Data</strong> tab has <strong>Get Data</strong>, with From JSON, From XML and From Folder under <strong>From File</strong>',
+  'I\'ve downloaded and unzipped the practice data, and the <code>visits</code> folder has six files',
+  'I\'ve saved a blank workbook called <code>power-query-practice.xlsx</code> in the same folder',
+]},
+'pq-import':{ title:'Getting data in', summary:'Import JSON, CSV and XML files, set the data types, and read the Applied Steps.', noGrid:true,
+learn:`
+<p>Every query has the same shape: <strong>connect</strong> to a file, <strong>transform</strong> it in the Power Query Editor, then <strong>load</strong> the result into a sheet. Here's the Power Query Editor:</p>
+<table class="mini"><tr><th>Part</th><th>What it's for</th></tr>
+<tr><td><strong>Preview</strong> (middle)</td><td>the first rows of your data, as it looks after the steps so far</td></tr>
+<tr><td><strong>Applied Steps</strong> (right)</td><td>every step, in order. Select a step to see the data at that point, and use the ✕ to delete one. Select the cog to change a step's settings.</td></tr>
+<tr><td><strong>Data type icon</strong> (left of each heading)</td><td>ABC is text, 123 is a whole number, 1.2 is a decimal, a calendar is a date, and so on. Select it to change the type.</td></tr>
+<tr><td><strong>Close &amp; Load</strong> (Home tab)</td><td>runs the steps and puts the result in a new sheet, as an Excel table</td></tr></table>
+${TIP('To count rows, load the query, then open <strong>Data &gt; Queries &amp; Connections</strong>. The pane lists each query with "N rows loaded". The preview in the editor only shows the first rows of a big file.')}
+<h2 class="dot">Data types matter</h2>
+<p>Power Query guesses each column's type when you import a file (the <strong>Changed Type</strong> step). It reads dates using your computer's regional settings. Sparta Leisure's Walsall site exports dates as <code>dd/mm/yyyy</code>. On a computer set to US settings, 03/04/2025 is read as 4 March, and dates such as 25/03/2025 become errors. The fix is to set the type <strong>using locale</strong>, so you tell Power Query which country's date format the file uses.</p>
+${`<p class="task-dl"><a class="btn small" href="downloads/sparta-leisure-powerquery.zip" download data-testid="download-pq">Download the practice data (ZIP)</a></p>`}
+<p>Do the three tasks in order, in your <code>power-query-practice.xlsx</code> workbook.</p>`,
+ex:[
+  { p:'Import **members.json** and load it as a table. How many members does it load?', sheet:'Members', sol:'=COUNTA(Members!A:A)-1',
+    steps:['<strong>Data &gt; Get Data &gt; From File &gt; From JSON</strong>, choose <code>members.json</code>, then <strong>Import</strong>.',
+     'The editor shows a <strong>Record</strong> with two fields. Select the word <strong>List</strong> next to <code>members</code> to drill into it.',
+     'Select <strong>To Table</strong> (List Tools &gt; Transform) and press <strong>OK</strong>.',
+     'Select the expand icon (two arrows) in the <code>Column1</code> heading. Untick <strong>Use original column name as prefix</strong>, then <strong>OK</strong>.',
+     'Set the types: select <code>dateOfBirth</code>, <code>joinDate</code> and <code>cancelDate</code> (hold Ctrl), then <strong>Transform &gt; Data Type &gt; Date</strong>.',
+     'Rename the query <code>Members</code> (Query Settings, on the right), then <strong>Home &gt; Close &amp; Load</strong>.'],
+    ask:'How many rows loaded? (See Data > Queries & Connections.)', hint:'JSON often arrives as a record holding a list. Drill into the list, convert it to a table, then expand the records into columns.',
+    how:'Drill into the members list, To Table, expand Column1, set the date types, then Close & Load. The Queries & Connections pane shows the row count.' },
+  { p:'Import the Walsall visits file, **visits/visits-S04.csv**, and make sure every check-in is read as a UK date and time. How many Walsall visits were in **March 2025**?', sheet:'Visits', sol:'=COUNTIFS(C:C,"S04",D:D,">="&DATE(2025,3,1),D:D,"<"&DATE(2025,4,1))',
+    steps:['<strong>Data &gt; Get Data &gt; From File &gt; From Text/CSV</strong>, choose <code>visits-S04.csv</code>, then <strong>Transform Data</strong> (not Load).',
+     'Look at the <strong>Changed Type</strong> step under Applied Steps, and at <code>CheckIn</code>. If its icon isn\'t a calendar with a clock, or some values show <em>Error</em>, the dates were misread.',
+     'Right-click the <code>CheckIn</code> heading and choose <strong>Change Type &gt; Using Locale…</strong>. Set <strong>Data Type</strong> to <strong>Date/Time</strong> and <strong>Locale</strong> to <strong>English (United Kingdom)</strong>, then <strong>OK</strong>. If asked, choose <strong>Replace current</strong>.',
+     'Select the arrow in the <code>CheckIn</code> heading and choose <strong>Date/Time Filters &gt; Between…</strong>. Keep rows that are after or equal to 01/03/2025 00:00 <strong>and</strong> before 01/04/2025 00:00.',
+     'Rename the query <code>Walsall March</code>, then <strong>Close &amp; Load</strong>.'],
+    ask:'How many rows loaded?', hint:'The type has to be set using locale English (United Kingdom), so 03/04/2025 means 3 April.',
+    how:'Change Type > Using Locale (Date/Time, English (United Kingdom)), then filter CheckIn to on or after 1 March and before 1 April 2025.' },
+  { p:'Import **sites.xml**, make `pool` a true/false column, and keep only the sites with a pool. What is their **total capacity**?', sheet:'Sites', sol:'=SUMIFS(E:E,D:D,TRUE)',
+    steps:['<strong>Data &gt; Get Data &gt; From File &gt; From XML</strong>, choose <code>sites.xml</code>.',
+     'In the Navigator, select <strong>site</strong>, then <strong>Transform Data</strong>. Each site\'s <code>id</code> attribute appears as a column called <code>Attribute:id</code>.',
+     'Set <code>pool</code> to <strong>True/False</strong> and <code>capacity</code> to <strong>Whole Number</strong> (the type icon in each heading).',
+     'Filter <code>pool</code> to <strong>TRUE</strong> only.',
+     'Select the <code>capacity</code> column, then <strong>Transform &gt; Statistics &gt; Sum</strong>. The query now returns a single number.',
+     'Rename the query <code>Pool capacity</code>, then <strong>Close &amp; Load</strong>. (Don\'t worry about losing the site list: the next lessons import it again.)'],
+    ask:'What is the total capacity of the sites with a pool?', hint:'Change pool to True/False, filter it to TRUE, then use Transform > Statistics > Sum on capacity.',
+    how:'From XML, choose site, set pool to True/False, filter to TRUE, then Statistics > Sum on capacity.' },
+]},
+'pq-clean':{ title:'Cleaning with steps', summary:'Trim, change case, replace values and filter, then refresh to repeat every step.', noGrid:true,
+learn:`
+<p>Power Query has a button for most of the cleaning techniques from <a href="#/lesson/cleaning">Cleaning data</a>. Each one adds a step instead of changing the data in place, so your original file is never touched.</p>
+<table class="mini"><tr><th>Cleaning job</th><th>In Power Query</th><th>The formula you learnt</th></tr>
+<tr><td>Remove extra spaces</td><td><strong>Transform &gt; Format &gt; Trim</strong></td><td><code>TRIM</code></td></tr>
+<tr><td>Fix capital letters</td><td><strong>Format &gt; Capitalize Each Word</strong>, <strong>UPPERCASE</strong>, <strong>lowercase</strong></td><td><code>PROPER</code>, <code>UPPER</code>, <code>LOWER</code></td></tr>
+<tr><td>Fix a typo or a code</td><td><strong>Transform &gt; Replace Values</strong></td><td><code>SUBSTITUTE</code></td></tr>
+<tr><td>Split one column into two</td><td><strong>Transform &gt; Split Column</strong> (by delimiter or by number of characters)</td><td><code>LEFT</code>, <code>MID</code></td></tr>
+<tr><td>Fill gaps from the row above</td><td><strong>Transform &gt; Fill &gt; Down</strong></td><td>copy and paste</td></tr>
+<tr><td>Remove repeated rows</td><td><strong>Home &gt; Remove Rows &gt; Remove Duplicates</strong></td><td>Data &gt; Remove Duplicates</td></tr>
+<tr><td>Deal with errors</td><td><strong>Home &gt; Remove Rows &gt; Remove Errors</strong>, or <strong>Transform &gt; Replace Errors</strong></td><td><code>IFERROR</code></td></tr>
+<tr><td>Summarise</td><td><strong>Transform &gt; Group By</strong></td><td><code>COUNTIFS</code>, a pivot table</td></tr></table>
+${TIP('Power Query is <strong>case-sensitive</strong>, unlike Excel formulas. To Power Query, <code>stu</code> and <code>STU</code> are different values, and <code>OLIVIA</code> isn\'t <code>Olivia</code>. So fix the case <em>before</em> you filter, group or merge.')}
+<h2 class="dot">Refreshing</h2>
+<p>This is the point of Power Query. When the data changes (next month's export, say), save the new file in the same place, then select <strong>Data &gt; Refresh All</strong>. Every step runs again on the new data. Cleaning that took an hour by hand now takes seconds, and it's done the same way every time.</p>
+<p>All three tasks use your <strong>Members</strong> query from the last lesson. To change it, open <strong>Data &gt; Queries &amp; Connections</strong> and double-click <strong>Members</strong>. Do each task on a copy: right-click Members in the Queries pane on the left of the editor, choose <strong>Duplicate</strong>, and give the copy a name.</p>`,
+ex:[
+  { p:'Clean the names: trim spaces from `firstName` and `lastName`, and make them Capitalised Each Word. Then **how many members are called Olivia**?', sheet:'Members', sol:'=COUNTIF(Members!B:B,"Olivia")',
+    steps:['Duplicate the <strong>Members</strong> query and name the copy <code>Olivias</code>.',
+     'Select <code>firstName</code> and <code>lastName</code> (hold Ctrl), then <strong>Transform &gt; Format &gt; Trim</strong>.',
+     'With both still selected, choose <strong>Format &gt; Capitalize Each Word</strong>.',
+     'Filter <code>firstName</code> to <code>Olivia</code> only.',
+     '<strong>Close &amp; Load</strong>, and read the row count in Queries &amp; Connections.'],
+    ask:'How many members are called Olivia?', hint:'Some names are in CAPITALS, lower case, or have spaces round them. Without cleaning, the filter misses them.',
+    how:'Trim, then Capitalize Each Word on both name columns, then filter firstName to Olivia.' },
+  { p:'Some plan codes are in lower case. Make every `planCode` UPPERCASE, then use **Group By** to count the members on each plan. How many are on the **Student** plan (STU)?', sheet:'Members', sol:'=COUNTIF(Members!H:H,"STU")',
+    steps:['Duplicate the <strong>Members</strong> query and name the copy <code>Members by plan</code>.',
+     'Select <code>planCode</code>, then <strong>Transform &gt; Format &gt; UPPERCASE</strong>.',
+     'Select <strong>Transform &gt; Group By</strong>. Group by <code>planCode</code>, with a new column called <code>Members</code> using the operation <strong>Count Rows</strong>. Then <strong>OK</strong>.',
+     'You should see five rows, one per plan. If you see <code>stu</code> as well as <code>STU</code>, the UPPERCASE step is missing or in the wrong place.',
+     '<strong>Close &amp; Load</strong>.'],
+    ask:'How many members are on the STU plan?', hint:'Group By counts each distinct value. Fix the case first, or stu and STU are counted separately.',
+    how:'UPPERCASE planCode, then Group By planCode with Count Rows, and read the STU row.' },
+  { p:'Find the members who **cancelled during 2025**. How many are there?', sheet:'Members', sol:'=COUNTIFS(Members!K:K,">="&DATE(2025,1,1))',
+    steps:['Duplicate the <strong>Members</strong> query and name the copy <code>Cancelled 2025</code>.',
+     'Check <code>cancelDate</code> has the date type (a calendar icon). Active members have <code>null</code> there, which means empty.',
+     'Select the arrow in the <code>cancelDate</code> heading, then <strong>Date Filters &gt; After or Equal To…</strong>, and enter 01/01/2025. Empty values are left out automatically.',
+     '<strong>Close &amp; Load</strong>.'],
+    ask:'How many members cancelled in 2025?', hint:'Use a date filter on cancelDate: on or after 1 January 2025. The data ends at 31 December 2025.',
+    how:'Filter cancelDate to on or after 01/01/2025.' },
+]},
+'pq-combine':{ title:'Combining tables', summary:'Combine a folder of files, remove duplicates, and merge tables like a lookup.', noGrid:true,
+learn:`
+<p>Data often arrives in pieces: a file per site, or the plan prices in a different system from the members. Power Query puts the pieces together in two ways.</p>
+<table class="mini"><tr><th></th><th>Append (and From Folder)</th><th>Merge</th></tr>
+<tr><td>Does</td><td>stacks tables <strong>on top of each other</strong>: more rows</td><td>joins tables <strong>side by side</strong> on a matching column: more columns</td></tr>
+<tr><td>Use it when</td><td>several files have the same columns, such as one visits file per site</td><td>you need a detail from another table, such as each member's plan fee</td></tr>
+<tr><td>Like</td><td>copying one list under another</td><td><code>XLOOKUP</code>, for a whole table at once</td></tr></table>
+<p><strong>From Folder</strong> appends every file in a folder in one go. Drop next month's file into the folder, select Refresh All, and it's included.</p>
+<h2 class="dot">Join kinds</h2>
+<p>When you merge, Power Query asks for a <strong>join kind</strong>. <strong>Left Outer</strong> keeps every row of the first table and brings in matches from the second, so it's the one that works like a lookup. <strong>Inner</strong> keeps only rows that match in both. Rows with no match are where data-quality problems hide, such as visits by member IDs that don't exist.</p>
+${TIP('After a merge, the new column holds a little table in each row. Select the expand icon in its heading, and tick only the columns you need.')}`,
+ex:[
+  { p:'Combine all six files in the **visits** folder into one query, fix the dates, and **remove duplicate rows**. Part of Wolverhampton\'s file was exported twice. How many visits are left?', sheet:'Visits', sol:'=COUNTA(A:A)-1',
+    steps:['<strong>Data &gt; Get Data &gt; From File &gt; From Folder</strong>, choose the <code>visits</code> folder, then <strong>Combine &gt; Combine &amp; Transform Data</strong>. Press <strong>OK</strong> on the Combine Files window.',
+     'Power Query adds a <code>Source.Name</code> column saying which file each row came from. Right-click its heading and choose <strong>Remove</strong>.',
+     'Walsall\'s dates are UK-style text. Right-click <code>CheckIn</code> and choose <strong>Change Type &gt; Using Locale…</strong>, with Date/Time and English (United Kingdom). The other sites\' dates (2025-03-01 13:05) are read correctly too.',
+     'Select every column (click in the table, then '+KEYS('Ctrl','A')+'), then <strong>Home &gt; Remove Rows &gt; Remove Duplicates</strong>.',
+     'Rename the query <code>Visits</code>, then <strong>Close &amp; Load</strong>.'],
+    ask:'How many visits are left after removing duplicates?', hint:'Remove Duplicates only removes rows where every selected column matches. Select all the columns first.',
+    how:'From Folder > Combine & Transform, remove Source.Name, set CheckIn with locale English (UK), select all columns, then Remove Duplicates.' },
+  { p:'Merge your **Visits** with the sites from **sites.xml** to find each visit\'s `pool` value. How many **minutes** did members spend at the sites **with a pool**?', sheet:'Visits', sol:'=SUM(SUMIFS(E:E,C:C,{"S01","S02","S05"}))',
+    steps:['Import <code>sites.xml</code> again (From XML, choose <strong>site</strong>, Transform Data). Set <code>pool</code> to True/False, and rename the query <code>Sites</code>. Use <strong>Home &gt; Close &amp; Load To… &gt; Only Create Connection</strong>, so it doesn\'t add a sheet.',
+     'Open your <strong>Visits</strong> query. Select <strong>Home &gt; Merge Queries &gt; Merge Queries as New</strong>.',
+     'Top table: <strong>Visits</strong>, select the <code>SiteID</code> column. Bottom table: <strong>Sites</strong>, select the <code>Attribute:id</code> column. Join Kind: <strong>Left Outer</strong>. Then <strong>OK</strong>.',
+     'Expand the new <code>Sites</code> column and tick only <code>pool</code>.',
+     'Filter <code>pool</code> to TRUE. Select <code>DurationMins</code>, then <strong>Transform &gt; Statistics &gt; Sum</strong>.',
+     '<strong>Close &amp; Load</strong>.'],
+    ask:'How many minutes were spent at the sites with a pool?', hint:'Merge on SiteID and Attribute:id with Left Outer, expand pool, filter to TRUE, then sum DurationMins.',
+    how:'Merge Visits with Sites (SiteID = Attribute:id, Left Outer), expand pool, filter TRUE, then Statistics > Sum on DurationMins.' },
+  { p:'Merge **Members** with **plans.csv** to get each member\'s monthly fee. What is the **total monthly fee of all Active members**, in pounds?', sheet:'Members', sol:'=SUMPRODUCT((Members!J2:J2621="Active")*SUMIF(Plans!A:A,Members!H2:H2621,Plans!C:C))',
+    steps:['Import <code>plans.csv</code> (From Text/CSV, Transform Data). Check <code>MonthlyFee</code> is a decimal number, then <strong>Close &amp; Load To… &gt; Only Create Connection</strong>.',
+     'Duplicate your <strong>Members</strong> query and name it <code>Income</code>. Make <code>planCode</code> UPPERCASE, as in the last lesson.',
+     '<strong>Home &gt; Merge Queries</strong>: Income\'s <code>planCode</code> with plans\' <code>PlanCode</code>, Left Outer.',
+     'Expand the new column and tick only <code>MonthlyFee</code>.',
+     'Filter <code>status</code> to <code>Active</code>, select <code>MonthlyFee</code>, then <strong>Transform &gt; Statistics &gt; Sum</strong>.',
+     '<strong>Close &amp; Load</strong>.'],
+    ask:'What is the total monthly fee of all Active members? Type it to 2 decimal places.', hint:'Merging is case-sensitive: lower-case plan codes won\'t find a fee unless you make them UPPERCASE first.',
+    how:'UPPERCASE planCode, merge with plans on PlanCode (Left Outer), expand MonthlyFee, filter status to Active, then Statistics > Sum.' },
+]},
 };
 
 /* Spread the right answers of Check yourself questions across the options (a fixed rotation, so it's stable) */
