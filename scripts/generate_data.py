@@ -398,6 +398,8 @@ with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
         sx.append(f'  <site id="{s[0]}">\n    <name>{s[1]}</name>\n    <town>{s[2]}</town>\n    <pool>{"yes" if s[3] else "no"}</pool>\n    <capacity>{s[4]}</capacity>\n    <opened>{s[5].isoformat()}</opened>\n    <location lat="{s[6]}" lon="{s[7]}"/>\n  </site>')
     sx.append('</sites>')
     z.writestr('sparta-leisure-capstone/sites.xml', '\n'.join(sx) + '\n')
+    z.writestr('sparta-leisure-capstone/sites.csv', csv_text(['SiteID','SiteName','Town','Pool','Capacity','Opened','Latitude','Longitude'],
+               [[s_[0], s_[1], s_[2], 'yes' if s_[3] else 'no', s_[4], s_[5].isoformat(), s_[6], s_[7]] for s_ in SITES]))
     z.writestr('sparta-leisure-capstone/plans.csv', csv_text(['PlanCode', 'PlanName', 'MonthlyFee2026', 'JoiningFee', 'PeakAccess', 'ClassesPerMonth', 'PoolAccess', 'MinAge'],
                [[p[0], p[1], round(p[2] + {'OFF': 1, 'STD': 1.5, 'PREM': 2, 'STU': 1, 'SEN': 1}[p[0]], 2), p[3], 'yes' if p[4] else 'no', p[5], 'yes' if p[6] else 'no', p[7]] for p in PLANS]))
     z.writestr('sparta-leisure-capstone/classes.csv', csv_text(['ClassID', 'ClassName', 'Category', 'DurationMins', 'Intensity', 'MaxPlaces'], [list(c[:6]) for c in CLASSES]))
@@ -408,7 +410,7 @@ with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
         'members.csv     every member who joined up to 30 September 2026 (status as at 30 September 2026)',
         'visits.csv      every gym check-in and check-out',
         'bookings.json   every class booking, exported from the ClassBook system (bookings.csv is the same data as CSV)',
-        'sites.xml       the six leisure centres',
+        'sites.xml       the six leisure centres (sites.csv is the same data as CSV)',
         'plans.csv       membership plans and their 2026 fees',
         'classes.csv     the class menu',
         'marketing.csv   marketing spend (£) by site and month, January 2025 to September 2026',
@@ -419,3 +421,47 @@ with open(os.path.join(ROOT, 'data/capstone_facts.json'), 'w') as f: json.dump(f
 
 print('members', len(lesson_members), 'visits25', len(visits25), 'bookings25', len(bookings25), 'raw', len(raw_rows))
 print('capstone', len(mrows), len(vrows), len(brows)); print(json.dumps(facts))
+
+# ---------------------------------------------------------------- Power Query practice data (optional unit)
+# The 2025 lesson data in raw form. Once it's imported and cleaned correctly, the answers match the lesson workbook,
+# which is how the site checks them.
+pq = io.BytesIO()
+prng = random.Random(77)
+with zipfile.ZipFile(pq, 'w', zipfile.ZIP_DEFLATED) as z:
+    def csv_text(header, rows):
+        s_ = io.StringIO(); w = csv.writer(s_, lineterminator='\r\n'); w.writerow(header); w.writerows(rows); return s_.getvalue()
+    out = []
+    for m in lesson_members:
+        first, last, plan = m['first'], m['last'], m['plan']
+        r = prng.random()
+        if r < 0.12: first, last = first.upper(), last.upper()
+        elif r < 0.22: first, last = first.lower(), last.lower()
+        elif r < 0.32: first, last = '  ' + first, last + ' '
+        if prng.random() < 0.15: plan = plan.lower()
+        out.append({'memberId': m['id'], 'firstName': first, 'lastName': last, 'gender': m['gender'], 'dateOfBirth': m['dob'].isoformat(),
+                    'postcode': m['postcode'], 'homeSiteId': m['site'], 'planCode': plan, 'joinDate': m['join'].isoformat(),
+                    'status': status_at(m, END25), 'cancelDate': m['cancel'].isoformat() if (m['cancel'] and m['cancel'] <= END25) else None})
+    z.writestr('sparta-leisure-powerquery/members.json', json.dumps({'exported': '2026-01-02T07:00:00Z', 'members': out}, indent=1))
+    for sid in SITE_IDS:
+        rows = [v for v in visits25 if v['site'] == sid]
+        fmt = (lambda d: d.strftime('%d/%m/%Y %H:%M')) if sid == 'S04' else (lambda d: d.strftime('%Y-%m-%d %H:%M'))
+        body = [[v['id'], v['member'], v['site'], fmt(v['checkin']), v['dur']] for v in rows]
+        if sid == 'S03':  # the export was run twice for part of the year
+            body += [list(b) for b in body[1000:1150]]
+            body.sort(key=lambda b: b[0])
+        z.writestr(f'sparta-leisure-powerquery/visits/visits-{sid}.csv', csv_text(['VisitID', 'MemberID', 'SiteID', 'CheckIn', 'DurationMins'], body))
+    z.writestr('sparta-leisure-powerquery/plans.csv', csv_text(['PlanCode','PlanName','MonthlyFee','JoiningFee','PeakAccess','ClassesPerMonth','PoolAccess','MinAge'], [list(p_) for p_ in PLANS]))
+    sx = ['<?xml version="1.0" encoding="UTF-8"?>', '<sites company="Sparta Leisure">']
+    for s_ in SITES:
+        sx.append(f'  <site id="{s_[0]}">\n    <name>{s_[1]}</name>\n    <town>{s_[2]}</town>\n    <pool>{"true" if s_[3] else "false"}</pool>\n    <capacity>{s_[4]}</capacity>\n  </site>')
+    sx.append('</sites>')
+    z.writestr('sparta-leisure-powerquery/sites.xml', '\n'.join(sx) + '\n')
+    z.writestr('sparta-leisure-powerquery/README.txt', '\r\n'.join([
+        'Sparta Leisure: Power Query practice data (2025)', '',
+        'members.json    every member who joined up to the end of 2025',
+        'visits/         one CSV of gym visits per site. Keep them together in this folder.',
+        'plans.csv       the membership plans',
+        'sites.xml       the six leisure centres', '',
+        'This is raw data. Some of it needs cleaning. Everyone in it is invented.', '']))
+with open(os.path.join(ROOT, 'public/downloads/sparta-leisure-powerquery.zip'), 'wb') as f: f.write(pq.getvalue())
+print('powerquery zip', len(pq.getvalue()))
