@@ -14,10 +14,10 @@ It's a sister site to the SQL Practice Lab and the ISTQB study site, and uses th
 
 | | |
 |---|---|
-| **Learning path** | 30 lessons in 10 units, built from the course slides and Excel notes, plus an optional Power Query unit (4 lessons) |
-| **Excel exercises** | 76, each marked against the real data. Learners choose **Practise here** (a formula grid in the browser) or **In Excel** (download the workbook and type the answer) |
+| **Learning path** | 31 lessons in 10 units, built from the course slides and Excel notes, plus an optional Power Query unit (4 lessons) |
+| **Excel exercises** | 80, each marked against the real data. Learners choose **Practise here** (a formula grid in the browser) or **In Excel** (download the workbook and type the answer) |
 | **Check yourself** | Multiple-choice questions on the concept lessons, with an explanation for every answer |
-| **Interactive pieces** | A histogram with a bin slider, a correlation scatter plot, Anscombe's Quartet, a truncated-axis demo, a colour-blindness simulator, the file formats side by side, and star and snowflake schemas |
+| **Interactive pieces** | A record explorer and type cards for the data types, an ERD explainer, a histogram with a bin slider, a correlation scatter plot, Anscombe's Quartet, a chart gallery (one chart per relationship), five before-and-after chart makeovers, a highlight table, big numbers, a truncated-axis demo, a colour-blindness simulator, the file formats side by side, and star and snowflake schemas |
 | **Quizzes** | An end-of-unit quiz for units 2 to 9 and a final quiz: 70 questions, 65% pass mark, optional timer |
 | **Capstone project** | A raw, messy 2026 export (CSV, JSON and XML) to clean, analyse and present to the board, in Excel with Power BI optional |
 | **Power Query (optional)** | Install Excel, then import JSON, CSV and XML, clean with recorded steps, combine a folder of files and merge tables, using a raw version of the 2025 data. Answers are checked on the site. Optional lessons don't count towards completing the path |

@@ -158,8 +158,14 @@ One component drives the lesson grid, Excel practice, the data pop-up in quizzes
 
 `WIDGETS` in `app.js` maps a name to a function that draws into a `<div data-widget>` (from `W()` in content). They
 compute from the embedded data, so they always match it: `histogram`, `scatter`, `anscombe`, `truncate`,
-`colourblind` (SVG `feColorMatrix` filters simulate protanopia, deuteranopia and greyscale), `formats`, `sheet` and
-`schema`. Charts are hand-drawn SVG with no chart library.
+`colourblind` (SVG `feColorMatrix` filters simulate protanopia, deuteranopia and greyscale), `formats`, `sheet`,
+`schema`, `typerecord` and `typecards` (from `DATA_TYPES`), and `erdexplain` (from `ERD_RELS`).
+
+The Data visualisation unit's `gallery`, `makeovers`, `heatmap` and `bignumbers` share a small chart toolkit
+(`hbars`, `lines`, `pie`) and one set of totals, `AGG()`, worked out once from the workbook: visits by site and
+weekday, monthly visits, active members by site and plan, bookings by class, and so on. Charts are hand-drawn SVG with
+no chart library, use the Okabe-Ito colour-blind-safe palette where categories need colours, and label values
+directly instead of relying on a legend.
 
 `renderERD()` draws entity relationship diagrams with crow's-foot ends, in the same style as the SQL Practice Lab.
 Models are plain data: `DATA_ERD`, `SCHEMA_STAR` and `SCHEMA_SNOW` in `src/content/intro.js`, each a list of tables
