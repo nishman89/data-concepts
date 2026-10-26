@@ -72,3 +72,35 @@ const DATA_TYPES = [
   { key:'datetime', name:'Datetime', blurb:'A date and a time together.',
     cols:[['Visits','CheckIn']] },
 ];
+
+/* Crow's foot notation: the four line ends */
+const FIG_CROW = (() => {
+  const end = (x, y, kind) => {   // the end touches a table at x; marks are drawn to its left
+    let g='';
+    const bar = dx => `<line x1="${x-dx}" y1="${y-9}" x2="${x-dx}" y2="${y+9}"/>`;
+    const crow = `<line x1="${x-16}" y1="${y}" x2="${x}" y2="${y-9}"/><line x1="${x-16}" y1="${y}" x2="${x}" y2="${y+9}"/>`;
+    const circ = dx => `<circle cx="${x-dx}" cy="${y}" r="5" fill="#fff"/>`;
+    if (kind==='one') g = bar(8)+bar(14);
+    if (kind==='zeroone') g = bar(8)+circ(20);
+    if (kind==='onemany') g = crow+bar(20);
+    if (kind==='zeromany') g = crow+circ(24);
+    return g;
+  };
+  const rows=[['one','Exactly one','Each visit is made by exactly one member.'],['zeroone','Zero or one','A member has at most one locker (if lockers were recorded).'],['onemany','One or many','Each site has at least one member, and usually many.'],['zeromany','Zero or many','A member has made no visits, or many.']];
+  return `<figure class="figure"><svg viewBox="0 0 560 210" role="img" aria-label="Crow's foot notation: two bars mean exactly one; a circle and a bar mean zero or one; a crow's foot and a bar mean one or many; a crow's foot and a circle mean zero or many.">
+<g stroke="#2d2a2b" stroke-width="2" fill="none">${rows.map((r,i)=>{ const y=28+i*50; return `<line x1="20" y1="${y}" x2="140" y2="${y}"/>${end(140,y,r[0])}<rect x="140" y="${y-15}" width="16" height="30" fill="#2d2a2b" stroke="none"/>`; }).join('')}</g>
+${rows.map((r,i)=>{ const y=28+i*50; return `<text x="176" y="${y-2}" class="sk-h">${r[1]}</text><text x="176" y="${y+15}" class="ax">${r[2]}</text>`; }).join('')}
+</svg><figcaption>The marks at the end of a line say how many rows of <em>that</em> table can match one row at the other end. The outer mark is the maximum, and the inner mark the minimum.</figcaption></figure>`;
+})();
+/* Plain-English sentences for each line in the Sparta Leisure diagram (child table, then parent table) */
+const ERD_RELS = [
+  ['Members','Sites','One site is the home of zero or many members. Each member has exactly one home site.'],
+  ['Members','Plans','One plan has zero or many members. Each member is on exactly one plan.'],
+  ['Visits','Members','One member makes zero or many visits. Each visit is made by exactly one member.'],
+  ['Visits','Sites','One site has zero or many visits. Each visit happens at exactly one site.'],
+  ['Bookings','Members','One member makes zero or many bookings. Each booking belongs to exactly one member.'],
+  ['Bookings','Classes','One class has zero or many bookings. Bookings link members and classes, which have a many-to-many relationship: a member books many classes, and a class is booked by many members.'],
+  ['Bookings','Sites','One site hosts zero or many bookings. Each booking is at exactly one site.'],
+  ['PriceHistory','Plans','Each plan has one row of price history. In a database this would be one-to-one.'],
+  ['SiteMonths','Sites','One site has many SiteMonths rows, one for each month. Each row is for exactly one site.'],
+];

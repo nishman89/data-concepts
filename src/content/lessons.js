@@ -15,7 +15,7 @@ const UNITS = [
   { title:'Foundations', blurb:'How this site works, and the leisure centre data you\'ll use throughout.', lessons:['intro','data'] },
   { title:'Data types and file formats', blurb:'What kinds of data there are, and the files they travel in.', lessons:['types','formats'] },
   { title:'Excel essentials', blurb:'Formulas, references and the everyday functions, on real data.', lessons:['formulas','functions','text-dates','logic','errors'] },
-  { title:'Excel for analysis', blurb:'Join sheets together with lookups, summarise with conditions and pivot tables, and build a dashboard.', lessons:['lookups','conditional','sort-filter','pivots','dashboards'] },
+  { title:'Excel for analysis', blurb:'How tables link, join sheets together with lookups, summarise with conditions and pivot tables, and build a dashboard.', lessons:['relationships','lookups','conditional','sort-filter','pivots','dashboards'] },
   { title:'Basic statistics', blurb:'Averages, spread, distributions, outliers and correlation, worked out in Excel.', lessons:['averages','spread','distributions','correlation'] },
   { title:'Data quality and cleaning', blurb:'Spot what\'s wrong with data, fix it, and decide what to do about gaps.', lessons:['quality','cleaning','missing'] },
   { title:'Critical thinking for data', blurb:'Question the data, and the conclusions people draw from it.', lessons:['simple','alternatives'] },
@@ -241,6 +241,49 @@ check:[
 ]},
 
 /* ===================== Unit 4: Excel for analysis ===================== */
+relationships:{ title:'Tables, keys and relationships', summary:'Primary and foreign keys, one-to-many and many-to-many relationships, and reading an entity relationship diagram (ERD).', sheet:'Members',
+learn:`
+<p>Sparta Leisure's data is split across sheets, and each sheet is a <strong>table</strong>. Each table holds one kind of thing, called an <strong>entity</strong>: members, sites or visits. Each row is one of those things, and each column is one fact about it, called an <strong>attribute</strong>. The tables link through shared codes. An <strong>entity relationship diagram</strong> (ERD) is a map of those links.</p>
+<h2 class="dot">Keys</h2>
+<table class="mini"><tr><th>Key</th><th>What it is</th><th>At Sparta Leisure</th></tr>
+<tr><td><strong>Primary key</strong> (PK)</td><td>a column whose value is unique in every row, so it identifies exactly one row. It can never be blank.</td><td><code>MemberID</code> in Members, <code>SiteID</code> in Sites</td></tr>
+<tr><td><strong>Foreign key</strong> (FK)</td><td>a column that holds another table's primary key, to say which row it links to. It can repeat.</td><td><code>MemberID</code> in Visits says who made the visit</td></tr>
+<tr><td><strong>Composite key</strong></td><td>a primary key made of two or more columns together, when no single column is unique</td><td><code>SiteID</code> + <code>Month</code> in SiteMonths</td></tr></table>
+<p>The same column name, <code>MemberID</code>, is a primary key in Members, where each member appears once. In Visits it's a foreign key, where a member appears once for every visit.</p>
+${F('=COUNTIF(A:A,A2)','Members',{fill:true,col:'Times',note:'Every MemberID appears exactly once in Members, so it can be the primary key.'})}
+${F('=COUNTIF(B:B,B2)','Visits',{fill:true,col:'Times',note:'In Visits, the same MemberID appears many times: it\'s a foreign key.'})}
+<h2 class="dot">Relationships</h2>
+<table class="mini"><tr><th>Relationship</th><th>Means</th><th>Example</th></tr>
+<tr><td><strong>One-to-many</strong></td><td>one row here links to many rows there. By far the most common.</td><td>one member makes many visits</td></tr>
+<tr><td><strong>One-to-one</strong></td><td>one row here links to at most one row there</td><td>each plan has one row of price history</td></tr>
+<tr><td><strong>Many-to-many</strong></td><td>many rows link to many rows. Databases split this into two one-to-many relationships through a <strong>junction table</strong>.</td><td>members and classes, linked through Bookings</td></tr></table>
+<h2 class="dot">Crow's foot notation</h2>
+<p>An ERD draws each table as a box listing its columns, and each relationship as a line from a foreign key to the primary key it refers to. The marks at each end of the line show how many rows can match:</p>
+${FIG_CROW}
+<h2 class="dot">Read Sparta Leisure's ERD</h2>
+<p>Select a relationship to see it on the diagram, in plain English.</p>
+${W('erdexplain')}
+<h2 class="dot">Why it matters in Excel</h2>
+<p>Relationships tell you which formula to use:</p>
+<table class="mini"><tr><th>You want…</th><th>Direction</th><th>Use</th></tr>
+<tr><td>a detail from the "one" side, such as each visit's member plan</td><td>many → one</td><td>a lookup: <code>XLOOKUP</code>, <code>VLOOKUP</code></td></tr>
+<tr><td>a summary of the "many" side, such as each member's number of visits</td><td>one → many</td><td><code>COUNTIFS</code>, <code>SUMIFS</code>, <code>AVERAGEIFS</code></td></tr></table>
+${TIP('A lookup from the "one" side to the "many" side doesn\'t give an error. It quietly returns the <strong>first</strong> match. Looking up a member in Visits returns their first visit only, and nothing warns you about the rest. Check which side you\'re on before writing the formula.')}
+<h2 class="dot">Referential integrity</h2>
+<p>Every foreign key should match a primary key that really exists. A visit by member M9999, who isn't in Members, is an <strong>orphan</strong>: it breaks referential integrity. Databases can refuse to store orphans. Spreadsheets can't, so check for them yourself:</p>
+${F('=COUNTIF(Members!A:A,B2)>0','Visits',{fill:true,col:'MemberExists',note:'TRUE if this visit\'s member exists. Sparta Leisure\'s 2025 data is clean, but the capstone data isn\'t.'})}`,
+ex:[
+  {p:'On the **Members** sheet, count **how many visits** each member made. (One member, many visits: which kind of formula does that need?)', sheet:'Members', fill:true, col:'Visits', sol:'=COUNTIF(Visits!B:B,A2)', hint:'Summarising the "many" side needs COUNTIF: count this MemberID in Visits!B:B.', askRow:9},
+  {p:'On the **Classes** sheet, count **how many bookings** each class has.', sheet:'Classes', fill:true, col:'Bookings', sol:'=COUNTIF(Bookings!C:C,A2)', hint:'COUNTIF(Bookings!C:C, A2): ClassID is column C of Bookings.'},
+  {p:'On the **Bookings** sheet, check every booking\'s class exists: show TRUE if its `ClassID` is on the Classes sheet.', sheet:'Bookings', fill:true, col:'ClassExists', sol:'=COUNTIF(Classes!A:A,C2)>0', hint:'COUNTIF(Classes!A:A, C2) counts matches. More than 0 means it exists.'},
+  {p:'SiteMonths has a **composite key**: SiteID and Month together. Build a single key column in the form `S01-2025-01`.', sheet:'SiteMonths', fill:true, col:'Key', sol:'=A2&"-"&TEXT(B2,"yyyy-mm")', hint:'Join A2, a hyphen, and TEXT(B2, "yyyy-mm").', askRow:14},
+],
+check:[
+  {q:'In the Visits sheet, what is <code>MemberID</code>?', a:['A primary key','A foreign key','A composite key','Not a key'], c:1, why:'It holds Members\' primary key, to say which member made the visit. It repeats, so it can\'t be Visits\' primary key.'},
+  {q:'What is the relationship between Sites and Members?', a:['One-to-one','One-to-many: one site, many members','Many-to-many','There isn\'t one'], c:1, why:'Each member has one home site, and each site is home to many members.'},
+  {q:'Members and Classes have a many-to-many relationship. Which table resolves it?', a:['Sites','Plans','Bookings','SiteMonths'], c:2, why:'Bookings is the junction table: each booking links one member to one class.'},
+  {q:'You write <code>=XLOOKUP(A2,Visits!B:B,Visits!E:E)</code> on the Members sheet to get each member\'s visit length. What happens?', a:['It returns an error','It returns only the length of each member\'s first visit, with no warning','It adds up all their visits','It counts their visits'], c:1, why:'Looking up from the one side to the many side silently returns the first match. Use SUMIFS or AVERAGEIFS to summarise the many side.'},
+]},
 lookups:{ title:'Lookups: joining sheets', summary:'VLOOKUP, HLOOKUP, XLOOKUP and INDEX with MATCH: bring data from one sheet into another.', sheet:'Members',
 learn:`
 <p>Sparta Leisure's data is split across sheets that link through shared codes, just like tables in a database. The Members sheet has each member's <code>PlanCode</code>, but the fee is on the Plans sheet. A <strong>lookup</strong> uses the code to fetch the fee.</p>
@@ -574,7 +617,8 @@ ${W('anscombe')}
 <h2 class="dot">Tables</h2>
 <p>Sometimes a table is the right choice, when people need to look up exact values. To format one well:</p>
 <ul class="plain"><li>Right-align numbers (in a font where the digits line up), and left-align text.</li><li>Space the columns equally, and use colour sparingly.</li><li>Use consistent measurements with clear units, at a precision that suits your audience: exact, or to the nearest thousand.</li><li>"Remove to improve": cut every line, colour and decimal place that isn't needed.</li></ul>
-<p>A <strong>highlight table</strong> (a heatmap) shades each cell by its value, so patterns jump out. In Excel, use <strong>Home &gt; Conditional Formatting &gt; Color Scales</strong>.</p>`,
+<p>A <strong>highlight table</strong> (a heatmap) shades each cell by its value, so patterns jump out. In Excel, use <strong>Home &gt; Conditional Formatting &gt; Color Scales</strong>. Here are Sparta Leisure's visits by site and day of the week. Which site is busiest on Saturdays?</p>
+${W('heatmap')}`,
 check:[
   {q:'What does Anscombe\'s Quartet show?', a:['Summary statistics can hide very different data, so plot it','Correlation always means causation','Four bins is the right number for a histogram','Tables are better than charts'], c:0, why:'All four datasets share the same statistics but look completely different when plotted.'},
   {q:'Which of Kirk\'s principles does a chart break if its y-axis doesn\'t start at zero, to exaggerate a change?', a:['Elegant','Accessible','Trustworthy','None of them'], c:2, why:'A misleading scale makes the chart untrustworthy.'},
@@ -592,6 +636,9 @@ learn:`
 <tr><td>Distribution</td><td>how values are spread</td><td>histogram, box plot</td></tr>
 <tr><td>Correlation</td><td>how two measures move together</td><td>scatter plot</td></tr>
 <tr><td>Spatial</td><td>where things are</td><td>map</td></tr></table>
+<h2 class="dot">See each one</h2>
+<p>Here's a chart for each relationship, all drawn from Sparta Leisure's 2025 data. Under each one is why it suits that relationship.</p>
+${W('gallery')}
 <h2 class="dot">Line charts</h2>
 <p>Use them for time series. Avoid lines that are too thick. Show dots for each point if the data was sampled at irregular intervals (monthly in one year, quarterly in the next). Aim for at most four coloured lines on one chart. For more, try <strong>small multiples</strong> (a grid of small charts on the same scale) or a <strong>slope chart</strong> (just the start and end points).</p>
 <h2 class="dot">Bar charts</h2>
@@ -599,17 +646,22 @@ learn:`
 ${W('truncate')}
 <h2 class="dot">Scatter plots</h2>
 <p>Use them to compare two continuous measures. A trend line shows the correlation, but use it with caution: it's easy to suggest that correlation is causation. And the <strong>grain</strong> matters: is each point a visit, a member, or a site in a month?</p>
+<h2 class="dot">Before and after</h2>
+<p>Each pair shows the same data twice: a chart that breaks the rules, then a better version. Work out what's wrong with each "before" chart before you read the notes.</p>
+${W('makeovers')}
 <h2 class="dot">Things to avoid</h2>
 <ul class="plain"><li><strong>Never make a 3D chart.</strong> Perspective makes nearer bars and slices look bigger, so readers can't compare them.</li>
 <li><strong>Be very wary of pie charts.</strong> People are poor at comparing angles: with similar slices, you can't tell whether Spain or Italy sold more. A sorted bar chart almost always works better.</li>
 <li><strong>Doughnut, treemap and waffle charts</strong> show part-to-whole. A treemap copes with many categories, and a waffle (a 10 × 10 grid) makes percentages easy to read.</li>
 <li><strong>Maps</strong> are for spatial questions. Shading regions by raw totals mostly shows where people live, so use rates instead.</li></ul>
 <h2 class="dot">Numbers on their own</h2>
-<p>Sometimes the best chart is no chart. One big number with a short explanation can say more: <em>"7,400 people receive venomous snake bites in the US every year. 5 of them die."</em> Or: <em>"90% of plastic waste has never been recycled."</em></p>`,
+<p>Sometimes the best chart is no chart. One big number with a short explanation can say more: <em>"7,400 people receive venomous snake bites in the US every year. 5 of them die."</em> Or: <em>"90% of plastic waste has never been recycled."</em> Here are three from Sparta Leisure:</p>
+${W('bignumbers')}`,
 check:[
   {q:'You want to show each site\'s visits month by month across 2025, for all six sites. Which chart works best?', a:['One pie chart per month','Small multiples: six small line charts on the same scale','A 3D bar chart','One line chart with six bright colours'], c:1, why:'Six lines on one chart is too many. Small multiples on the same scale keep each site readable and comparable.'},
   {q:'Which chart suits the relationship between marketing spend and new members?', a:['Scatter plot','Pie chart','Treemap','Line chart'], c:0, why:'A scatter plot compares two continuous measures, one point per row.'},
   {q:'Why should you avoid pie charts for comparing similar values?', a:['They\'re hard to print','People are poor at comparing angles and areas','They can\'t show percentages','Excel doesn\'t support them'], c:1, why:'Slices of similar size look the same. Bars of similar length are much easier to compare.'},
+  {q:'You want to compare how visit lengths are spread out at each of the six sites, including their outliers. Which chart works best?', a:['Six pie charts','A box plot for each site, side by side','A line chart','A treemap'], c:1, why:'A box plot shows each site\'s median, quartiles and outliers, and side-by-side boxes on one axis are easy to compare.'},
   {q:'A bar chart\'s axis starts at 1,100 instead of 0. What happens?', a:['Differences look bigger than they are','The chart becomes more accurate','Nothing changes','The bars become 3D'], c:0, why:'A bar\'s length should be proportional to its value. Cutting off the bottom exaggerates the differences.'},
 ]},
 colour:{ title:'Colour and accessibility', summary:'Use colour to connect and separate information, for everyone, including people with colour blindness.',
