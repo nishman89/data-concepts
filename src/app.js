@@ -446,6 +446,198 @@ const WIDGETS = {
     renderERD($('[data-slot=snow]',el), SCHEMA_SNOW, {testPrefix:'snow', label:'Snowflake schema: dimension tables are split into further tables'});
   },
 };
+
+/* ---------- Charts drawn from the Sparta Leisure data (the Data visualisation unit) ---------- */
+const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7','#56B4E9','#D55E00'];
+const GREY='#b7bfc4', DARK='#3d4a52', ACCENT='#d6336c', BLUE='#2f6aa3';
+const fmtN = v => Math.round(v).toLocaleString('en-GB');
+let AGG_CACHE=null;
+function AGG(){
+  if (AGG_CACHE) return AGG_CACHE;
+  const S=WB.sheet('Sites').rows.map(r=>({id:r[0],name:r[1],town:r[2],pool:r[3],cap:r[4],lat:r[6],lon:r[7]}));
+  const town=Object.fromEntries(S.map(s=>[s.id,s.town]));
+  const V=WB.sheet('Visits').rows, M=WB.sheet('Members').rows, B=WB.sheet('Bookings').rows, SM=WB.sheet('SiteMonths').rows;
+  const visits={}, durs={}, week={}; S.forEach(s=>{ visits[s.id]=0; durs[s.id]=[]; week[s.id]=[0,0,0,0,0,0,0]; });
+  let peak=0;
+  V.forEach(r=>{ visits[r[2]]++; durs[r[2]].push(r[4]); const d=fromSerial(Math.floor(r[3])).dow; week[r[2]][(d+6)%7]++; const hr=Math.floor(Math.round((r[3]%1)*1440)/60); if (hr===17||hr===18) peak++; });
+  const monthly={}; S.forEach(s=>monthly[s.id]=new Array(12).fill(0)); SM.forEach(r=>{ monthly[r[0]][fromSerial(r[1]).m-1]=r[4]; });
+  const newBySite={}; SM.forEach(r=>newBySite[r[0]]=(newBySite[r[0]]||0)+r[2]);
+  const jan1=serialOf(2025,1,1), PLANS=['STD','OFF','PREM','STU','SEN'];
+  const activeEnd={}, activeStart={}, planMix={}; S.forEach(s=>{ activeEnd[s.id]=0; activeStart[s.id]=0; planMix[s.id]=Object.fromEntries(PLANS.map(p=>[p,0])); });
+  const byPlan=Object.fromEntries(PLANS.map(p=>[p,0]));
+  M.forEach(r=>{ const site=r[6]; if (r[9]==='Active'){ activeEnd[site]++; planMix[site][r[7]]++; byPlan[r[7]]++; } if (r[8]<=jan1 && (r[10]==null || r[10]>jan1)) activeStart[site]++; });
+  const cname=Object.fromEntries(WB.sheet('Classes').rows.map(r=>[r[0],r[1]])); const byClass={}; B.forEach(r=>byClass[r[2]]=(byClass[r[2]]||0)+1);
+  const allD=V.map(r=>r[4]).filter(x=>x<=300), avgAll=meanOf(allD);
+  const sm=SM.map(r=>({x:r[5],y:r[2],site:r[0],m:r[1]}));
+  AGG_CACHE={S,town,visits,durs,week,monthly,newBySite,activeEnd,activeStart,planMix,byPlan,PLANS,byClass,cname,avgAll,sm,total:V.length,peak,
+    attended:B.filter(r=>r[6]).length, bookings:B.length};
+  return AGG_CACHE;
+}
+const PLAN_NAMES={STD:'Standard',OFF:'Off-peak',PREM:'Premium',STU:'Student',SEN:'Senior'};
+const MONTHS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function newSvg(W,H,label){ return sv('svg',{viewBox:`0 0 ${W} ${H}`,class:'chart',role:'img','aria-label':label}); }
+const T=(x,y,t,a={})=>sv('text',{x,y,...a},t);
+
+// Horizontal bars. items: [{label, value, color}]
+function hbars(items,{W=560,label='',title=null,fmt=fmtN,lw=150,bar=26,gap=12,max=null,axis=false,grid=false,valueLabels=true}={}){
+  const top=title?30:8, H=top+items.length*(bar+gap)+(axis?26:6), x0=lw, x1=W-60, mx=max??Math.max(...items.map(i=>i.value));
+  const X=v=>x0+v/mx*(x1-x0), svg=newSvg(W,H,label);
+  if (title) svg.append(T(0,18,title,{class:'ch-title'}));
+  if (grid||axis) niceTicks(0,mx,5).forEach(t=>{ if (grid) svg.append(sv('line',{x1:X(t),x2:X(t),y1:top,y2:H-(axis?22:0),class:'grid'})); if (axis) svg.append(T(X(t),H-6,fmtN(t),{'text-anchor':'middle',class:'ax'})); });
+  items.forEach((it,i)=>{ const y=top+i*(bar+gap); svg.append(sv('rect',{x:x0,y,width:Math.max(1,X(it.value)-x0),height:bar,fill:it.color||BLUE,rx:2}), T(x0-8,y+bar/2+4,it.label,{'text-anchor':'end',class:'ax lab'}));
+    if (valueLabels) svg.append(T(X(it.value)+6,y+bar/2+4,fmt(it.value),{class:'ax val'})); });
+  return svg;
+}
+// Lines. series: [{name, vals, color, width}]
+function lines(series,{W=560,H=260,label='',xl=MONTHS3,direct=true,markers=false,ymax=null,title=null,legend=false}={}){
+  const m={l:46,r:direct?110:14,t:title?34:12,b:28}, F=chartFrame(W,H,m), hi=ymax??Math.max(...series.flatMap(s=>s.vals))*1.08;
+  const X=i=>F.x0+i/(xl.length-1)*(F.x1-F.x0), Y=v=>F.y0-v/hi*(F.y0-F.y1), svg=newSvg(W,H,label);
+  if (title) svg.append(T(0,18,title,{class:'ch-title'}));
+  niceTicks(0,hi,4).forEach(t=>svg.append(sv('line',{x1:F.x0,x2:F.x1,y1:Y(t),y2:Y(t),class:'grid'}),T(F.x0-6,Y(t)+4,fmtN(t),{'text-anchor':'end',class:'ax'})));
+  xl.forEach((l,i)=>svg.append(T(X(i),F.y0+16,l,{'text-anchor':'middle',class:'ax'})));
+  const lab=[]; series.forEach(s=>{ svg.append(sv('path',{d:'M'+s.vals.map((v,i)=>`${X(i)} ${Y(v)}`).join(' L'),stroke:s.color,'stroke-width':s.width||2.5,fill:'none','stroke-linejoin':'round'}));
+    if (markers) s.vals.forEach((v,i)=>svg.append(sv('circle',{cx:X(i),cy:Y(v),r:3.5,fill:s.color})));
+    if (direct) lab.push({y:Y(s.vals[s.vals.length-1]),s}); });
+  lab.sort((a,b)=>a.y-b.y); for (let i=1;i<lab.length;i++) if (lab[i].y-lab[i-1].y<14) lab[i].y=lab[i-1].y+14;
+  lab.forEach(({y,s})=>svg.append(T(F.x1+6,y+4,s.name,{fill:s.color,class:'lbl'})));
+  return svg;
+}
+function pie(items,{W=360,label=''}={}){
+  const svg=newSvg(W,250,label), cx=120, cy=125, r=105, tot=items.reduce((a,i)=>a+i.value,0); let a0=-Math.PI/2;
+  items.forEach((it,k)=>{ const a1=a0+it.value/tot*2*Math.PI, big=a1-a0>Math.PI?1:0;
+    svg.append(sv('path',{d:`M${cx} ${cy} L${cx+r*Math.cos(a0)} ${cy+r*Math.sin(a0)} A${r} ${r} 0 ${big} 1 ${cx+r*Math.cos(a1)} ${cy+r*Math.sin(a1)} Z`,fill:it.color,stroke:'#fff','stroke-width':1.5}));
+    svg.append(sv('rect',{x:250,y:30+k*24,width:12,height:12,fill:it.color}), T(268,40+k*24,it.label,{class:'ax lab'})); a0=a1; });
+  return svg;
+}
+
+const WIDGETS2 = {
+  erdexplain(el){
+    const box=h('div',{class:'erd-scroll'}); el.append(box);
+    const svg=renderERD(box, DATA_ERD, {testPrefix:'rel-erd', label:'Sparta Leisure entity relationship diagram'});
+    const say=h('p',{class:'rel-say','aria-live':'polite','data-testid':'rel-sentence'},'Select a relationship.');
+    const list=h('div',{class:'dtabs rel-list',role:'group','aria-label':'Relationships'});
+    ERD_RELS.forEach(([a,b,text])=>list.append(h('button',{type:'button','aria-pressed':'false','data-testid':`rel-${a}-${b}`,onclick:e=>{
+      $$('button',list).forEach(x=>x.setAttribute('aria-pressed',String(x===e.currentTarget)));
+      $$('.hot',svg).forEach(x=>x.classList.remove('hot')); svg.classList.add('focusing');
+      $$('g.rel',svg).forEach(r=>{ if (r.dataset.a===a&&r.dataset.b===b) r.classList.add('hot'); });
+      [a,b].forEach(t=>{ const g=svg.querySelector(`[data-t="${t}"]`); g&&g.classList.add('hot'); });
+      say.innerHTML=`<b>${a} → ${b}.</b> ${text}`;
+      const r=[a,b].map(t=>svg.querySelector(`[data-t="${t}"]`).getBoundingClientRect()), br=box.getBoundingClientRect();
+      const mid=(Math.min(r[0].left,r[1].left)+Math.max(r[0].right,r[1].right))/2;
+      box.scrollBy({left:mid-(br.left+br.width/2), behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}); }}, `${a} → ${b}`)));
+    el.append(list, say);
+  },
+  gallery(el){
+    const A=AGG(), site=id=>A.town[id];
+    const tabs=[
+      ['Magnitude','Visits by site','A bar chart compares sizes. Bars start at zero, so their lengths can be compared directly. Every value is labelled, so there\'s no need for an axis.',()=>hbars(A.S.map(s=>({label:s.town,value:A.visits[s.id]})),{label:'Bar chart of visits by site'})],
+      ['Time series','Visits each month, all sites','A line chart shows change over time. The January peak (New Year\'s resolutions) and the summer dip stand out at once.',()=>lines([{name:'All sites',vals:MONTHS3.map((_,i)=>A.S.reduce((t,s)=>t+A.monthly[s.id][i],0)),color:BLUE}],{markers:true,direct:false,label:'Line chart of monthly visits'})],
+      ['Slope','Active members, start and end of 2025','A slope chart keeps only the first and last values, so the direction and steepness of change are easy to compare between sites.',()=>{
+        const W=560,H=300,x0=160,x1=400,all=A.S.flatMap(s=>[A.activeStart[s.id],A.activeEnd[s.id]]),lo=0,hi=Math.max(...all)*1.05,Y=v=>270-(v-lo)/(hi-lo)*240,svg=newSvg(W,H,'Slope chart of active members by site');
+        svg.append(T(x0,16,'1 Jan 2025',{'text-anchor':'middle',class:'ax-t'}),T(x1,16,'31 Dec 2025',{'text-anchor':'middle',class:'ax-t'}),sv('line',{x1:x0,x2:x0,y1:24,y2:280,class:'grid'}),sv('line',{x1:x1,x2:x1,y1:24,y2:280,class:'grid'}));
+        const ends=A.S.map(s=>({s,y:Y(A.activeEnd[s.id])})).sort((a,b)=>a.y-b.y); for (let i=1;i<ends.length;i++) if (ends[i].y-ends[i-1].y<14) ends[i].y=ends[i-1].y+14;
+        const starts=A.S.map(s=>({s,y:Y(A.activeStart[s.id])})).sort((a,b)=>a.y-b.y); for (let i=1;i<starts.length;i++) if (starts[i].y-starts[i-1].y<14) starts[i].y=starts[i-1].y+14;
+        A.S.forEach((s,k)=>{ const up=A.activeEnd[s.id]>=A.activeStart[s.id], c=up?BLUE:ACCENT; svg.append(sv('line',{x1:x0,y1:Y(A.activeStart[s.id]),x2:x1,y2:Y(A.activeEnd[s.id]),stroke:c,'stroke-width':2.5}),sv('circle',{cx:x0,cy:Y(A.activeStart[s.id]),r:4,fill:c}),sv('circle',{cx:x1,cy:Y(A.activeEnd[s.id]),r:4,fill:c})); });
+        starts.forEach(({s,y})=>svg.append(T(x0-10,y+4,`${s.town} ${A.activeStart[s.id]}`,{'text-anchor':'end',class:'ax lab'})));
+        ends.forEach(({s,y})=>svg.append(T(x1+10,y+4,`${A.activeEnd[s.id]} ${s.town}`,{class:'ax lab'})));
+        return svg; }],
+      ['Ranking','Classes by number of bookings','Sorted bars show the order at a glance. Highlighting the top three in colour, and the rest in grey, tells the reader where to look.',()=>{ const it=Object.entries(A.byClass).sort((a,b)=>b[1]-a[1]).map(([id,v],k)=>({label:A.cname[id],value:v,color:k<3?BLUE:GREY})); return hbars(it,{bar:18,gap:7,lw:160,label:'Sorted bar chart of class bookings'}); }],
+      ['Part-to-whole','How each site\'s active members split by plan','A 100% stacked bar shows the parts of each whole, and makes it easy to compare the mix between sites. It\'s clearer than six pie charts.',()=>{
+        const W=560,lw=110,x0=lw,x1=W-10,bar=26,gap=12,top=40,svg=newSvg(W,top+A.S.length*(bar+gap)+10,'100% stacked bar chart of plan mix by site');
+        A.PLANS.forEach((p,k)=>svg.append(sv('rect',{x:x0+k*88,y:6,width:12,height:12,fill:OKABE[k]}),T(x0+k*88+16,16,PLAN_NAMES[p],{class:'ax lab'})));
+        A.S.forEach((s,i)=>{ const y=top+i*(bar+gap), tot=A.activeEnd[s.id]; let x=x0; svg.append(T(x0-8,y+bar/2+4,s.town,{'text-anchor':'end',class:'ax lab'}));
+          A.PLANS.forEach((p,k)=>{ const w=A.planMix[s.id][p]/tot*(x1-x0); svg.append(sv('rect',{x,y,width:w,height:bar,fill:OKABE[k]},sv('title',{},`${s.town}, ${PLAN_NAMES[p]}: ${A.planMix[s.id][p]}`))); if (w>30) svg.append(T(x+w/2,y+bar/2+4,Math.round(A.planMix[s.id][p]/tot*100)+'%',{'text-anchor':'middle',class:'in-bar'})); x+=w; }); });
+        return svg; }],
+      ['Deviation','How busy each site is for its size: visits per place of capacity','A deviation (diverging) chart shows how far each value is above or below a reference, here the figure for all sites together. It focuses on the differences without truncating an axis, and blue and pink show above and below without relying on red and green.',()=>{
+        const totV=A.S.reduce((t,s)=>t+A.visits[s.id],0), totC=A.S.reduce((t,s)=>t+s.cap,0), ref=totV/totC;
+        const it=A.S.map(s=>({s,d:A.visits[s.id]/s.cap-ref})).sort((a,b)=>b.d-a.d), W=560,lw=130,cx=340,bar=24,gap=12,top=30,mx=Math.max(...it.map(i=>Math.abs(i.d))),span=Math.min(W-cx-70,cx-lw-60),X=v=>cx+v/mx*span,svg=newSvg(W,top+it.length*(bar+gap),'Diverging bar chart of visits per place of capacity by site');
+        svg.append(T(cx,16,`All sites: ${ref.toFixed(1)} visits per place`,{'text-anchor':'middle',class:'ax-t'}),sv('line',{x1:cx,x2:cx,y1:22,y2:top+it.length*(bar+gap),stroke:DARK}));
+        it.forEach(({s,d},i)=>{ const y=top+i*(bar+gap); svg.append(sv('rect',{x:Math.min(cx,X(d)),y,width:Math.max(1,Math.abs(X(d)-cx)),height:bar,fill:d>=0?BLUE:ACCENT}),T(lw-8,y+bar/2+4,s.town,{'text-anchor':'end',class:'ax lab'}),T(d>=0?X(d)+6:X(d)-6,y+bar/2+4,(d>=0?'+':'−')+Math.abs(d).toFixed(1),{'text-anchor':d>=0?'start':'end',class:'ax val'})); });
+        return svg; }],
+      ['Distribution','Visit length at each site','A box plot summarises a distribution: the box covers the middle half (Q1 to Q3), the line is the median, the whiskers reach 1.5 × the box\'s length, and dots are outliers. Side-by-side boxes compare sites on one scale.',()=>{
+        const W=560,H=280,F=chartFrame(W,H,{l:44,r:10,t:12,b:30}),hi=300,Y=v=>F.y0-v/hi*(F.y0-F.y1),svg=newSvg(W,H,'Box plots of visit length by site'),bw=(F.x1-F.x0)/A.S.length;
+        niceTicks(0,hi,6).forEach(t=>svg.append(sv('line',{x1:F.x0,x2:F.x1,y1:Y(t),y2:Y(t),class:'grid'}),T(F.x0-6,Y(t)+4,String(t),{'text-anchor':'end',class:'ax'})));
+        A.S.forEach((s,i)=>{ const d=A.durs[s.id].filter(x=>x<=300).sort((a,b)=>a-b), q=k=>{ const p=(d.length-1)*k,lo=Math.floor(p); return d[lo]+(d[Math.ceil(p)]-d[lo])*(p-lo); }, q1=q(.25),q2=q(.5),q3=q(.75),iq=q3-q1,lo=Math.max(d[0],q1-1.5*iq),up=Math.min(d[d.length-1],q3+1.5*iq), cx=F.x0+bw*(i+.5), w=bw*.45;
+          svg.append(sv('line',{x1:cx,x2:cx,y1:Y(up),y2:Y(lo),stroke:DARK}),sv('rect',{x:cx-w/2,y:Y(q3),width:w,height:Y(q1)-Y(q3),fill:'#d9e6f2',stroke:BLUE,'stroke-width':1.5}),sv('line',{x1:cx-w/2,x2:cx+w/2,y1:Y(q2),y2:Y(q2),stroke:BLUE,'stroke-width':3}),sv('line',{x1:cx-w/4,x2:cx+w/4,y1:Y(up),y2:Y(up),stroke:DARK}),sv('line',{x1:cx-w/4,x2:cx+w/4,y1:Y(lo),y2:Y(lo),stroke:DARK}),T(cx,F.y0+16,s.town,{'text-anchor':'middle',class:'ax'}));
+          d.filter(x=>x>up).forEach(x=>svg.append(sv('circle',{cx:cx,cy:Y(x),r:2.2,fill:ACCENT,'fill-opacity':.45}))); });
+        return svg; }],
+      ['Correlation','Marketing spend and new members, per site per month','A scatter plot shows how two measures move together. Each dot is one site in one month, which is the chart\'s grain. The trend line shows the direction, but not the cause.',()=>{
+        const W=560,H=300,F=chartFrame(W,H,{l:50,r:14,t:12,b:40}),xs=A.sm.map(p=>p.x),ys=A.sm.map(p=>p.y),xl=0,xh=Math.max(...xs)*1.05,yh=Math.max(...ys)*1.1,X=v=>F.x0+(v-xl)/(xh-xl)*(F.x1-F.x0),Y=v=>F.y0-v/yh*(F.y0-F.y1),svg=newSvg(W,H,'Scatter plot of marketing spend and new members');
+        niceTicks(0,yh,5).forEach(t=>svg.append(sv('line',{x1:F.x0,x2:F.x1,y1:Y(t),y2:Y(t),class:'grid'}),T(F.x0-6,Y(t)+4,String(t),{'text-anchor':'end',class:'ax'})));
+        niceTicks(0,xh,5).forEach(t=>svg.append(T(X(t),F.y0+16,'£'+fmtN(t),{'text-anchor':'middle',class:'ax'})));
+        const mx=meanOf(xs),my=meanOf(ys); let sxy=0,sxx=0; xs.forEach((x,i)=>{ sxy+=(x-mx)*(ys[i]-my); sxx+=(x-mx)**2; }); const b=sxy/sxx,a=my-b*mx;
+        A.sm.forEach(p=>svg.append(sv('circle',{cx:X(p.x),cy:Y(p.y),r:4.5,fill:BLUE,'fill-opacity':.7})));
+        svg.append(sv('line',{x1:X(Math.min(...xs)),y1:Y(a+b*Math.min(...xs)),x2:X(Math.max(...xs)),y2:Y(a+b*Math.max(...xs)),class:'trend'}),T((F.x0+F.x1)/2,H-4,'Marketing spend in the month',{'text-anchor':'middle',class:'ax-t'}),T(F.x0+4,F.y1+10,'New members',{class:'ax-t'}));
+        return svg; }],
+      ['Spatial','Where the sites are, sized by active members','A map shows where things are. Here each circle\'s <em>area</em> is proportional to the site\'s active members. Without roads or borders this is a simple location plot: a real map would add a basemap, in Power BI for example.',()=>{
+        const W=560,H=360,lats=A.S.map(s=>s.lat),lons=A.S.map(s=>s.lon),la0=Math.min(...lats)-.08,la1=Math.max(...lats)+.08,lo0=Math.min(...lons)-.15,lo1=Math.max(...lons)+.15,k=Math.cos(52.55*Math.PI/180),sx=(W-40)/((lo1-lo0)*k),sy=(H-40)/(la1-la0),sc=Math.min(sx,sy),X=lo=>20+(lo-lo0)*k*sc,Y=la=>H-20-(la-la0)*sc,svg=newSvg(W,H,'Location plot of the six sites');
+        svg.append(sv('rect',{x:0,y:0,width:W,height:H,fill:'#eef3f6',rx:8}));
+        const mxA=Math.max(...A.S.map(s=>A.activeEnd[s.id]));
+        const place={S03:'above',S04:'right'};
+        A.S.forEach(s=>{ const r=6+22*Math.sqrt(A.activeEnd[s.id]/mxA), cx=X(s.lon), cy=Y(s.lat), side=place[s.id], lbl=`${s.town} (${A.activeEnd[s.id]})`;
+          svg.append(sv('circle',{cx,cy,r,fill:s.pool?BLUE:'#7f8c93','fill-opacity':.75,stroke:'#fff','stroke-width':1.5}));
+          svg.append(side==='above'?T(cx,cy-r-8,lbl,{'text-anchor':'middle',class:'ax lab'}):side==='right'?T(cx+r+6,cy+4,lbl,{class:'ax lab'}):T(cx,cy+r+14,lbl,{'text-anchor':'middle',class:'ax lab'})); });
+        svg.append(sv('circle',{cx:22,cy:H-40,r:6,fill:BLUE}),T(32,H-36,'Has a pool',{class:'ax'}),sv('circle',{cx:22,cy:H-22,r:6,fill:'#7f8c93'}),T(32,H-18,'No pool',{class:'ax'}),T(W-20,24,'N ↑',{'text-anchor':'end',class:'ax-t'}));
+        return svg; }],
+    ];
+    el.innerHTML=TABS(tabs.map(([lbl,,,],i)=>({label:lbl,html:`<div class="gal" data-slot="g${i}"></div>`}))); wireTabs(el);
+    tabs.forEach(([lbl,title,why,draw],i)=>{ const slot=$(`[data-slot=g${i}]`,el); slot.append(h('div',{class:'gal-h'},title), h('div',{class:'w-fig'}, draw()), h('p',{class:'gal-why',html:'<b>Why this chart:</b> '+why})); });
+  },
+  makeovers(el){
+    const A=AGG(), rainbow=['#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4'];
+    const bySite=A.S.map(s=>({label:s.town,value:A.activeEnd[s.id],id:s.id}));
+    const pairs=[
+      ['Pie or bar?', ()=>pie(bySite.map((s,k)=>({...s,color:OKABE[k]})),{label:'Pie chart of active members by site'}),
+        ['Which is bigger, Dudley or Shrewsbury? You can\'t tell from the angles.','The reader has to match colours to the legend.'],
+        ()=>hbars([...bySite].sort((a,b)=>b.value-a.value),{W:440,label:'Sorted bar chart of active members by site',title:'Active members by site, end of 2025'}),
+        ['Sorted bars make the order obvious, and Dudley is clearly ahead of Shrewsbury.','Labels sit next to the bars, so there\'s no legend to decode.']],
+      ['Spaghetti or small multiples?', ()=>lines(A.S.map((s,k)=>({name:s.town,vals:A.monthly[s.id],color:rainbow[k],width:3})),{direct:false,label:'Six overlapping lines',title:'Monthly visits by site'}),
+        ['Six lines cross each other, so no single site can be followed.','Bright colours fight for attention, and there\'s no legend at all.'],
+        ()=>{ const g=h('div',{class:'sm-grid'}), hi=Math.max(...A.S.flatMap(s=>A.monthly[s.id]))*1.05; A.S.forEach(s=>{ const svg=lines([{name:s.town,vals:A.monthly[s.id],color:BLUE}],{W:300,H:150,direct:false,ymax:hi,xl:['J','F','M','A','M','J','J','A','S','O','N','D'],title:s.town,label:`Monthly visits at ${s.town}`}); g.append(svg); }); return g; },
+        ['One small chart per site, all on the same scale, so they can be compared fairly.','Each site\'s own pattern is easy to see, and so is the January peak across the sites.']],
+      ['3D or flat?', ()=>{ const W=560,H=280,base=230,dx=16,dy=-12,items=A.S.map(s=>({label:s.town,value:A.visits[s.id]})),mx=Math.max(...items.map(i=>i.value)),svg=newSvg(W,H,'3D column chart of visits by site'),bw=56,gap=28,x0=60;
+          svg.append(T(0,18,'VISITS BY SITE',{class:'ch-title'}));
+          [0,1000,2000,3000].forEach(t=>{ const y=base-t/mx*180; svg.append(sv('polyline',{points:`${x0} ${y} ${x0+dx} ${y+dy} ${W-10} ${y+dy}`,fill:'none',stroke:'#c9c9c9'}),T(x0-6,y+4,fmtN(t),{'text-anchor':'end',class:'ax'})); });
+          items.forEach((it,i)=>{ const x=x0+20+i*(bw+gap), hgt=it.value/mx*180, y=base-hgt, c=rainbow[i];
+            svg.append(sv('polygon',{points:`${x+bw} ${y} ${x+bw+dx} ${y+dy} ${x+bw+dx} ${base+dy} ${x+bw} ${base}`,fill:c,'fill-opacity':.6}),sv('polygon',{points:`${x} ${y} ${x+dx} ${y+dy} ${x+bw+dx} ${y+dy} ${x+bw} ${y}`,fill:c,'fill-opacity':.8}),sv('rect',{x,y,width:bw,height:hgt,fill:c}),T(x+bw/2,base+18,it.label,{'text-anchor':'middle',class:'ax',transform:`rotate(-20 ${x+bw/2} ${base+18})`})); });
+          return svg; },
+        ['Against the back gridlines, no bar\'s value can be read: is Telford nearer 2,500 or 3,000?','The depth adds ink and no information, and the rainbow colours mean nothing.','The labels are tilted, so they\'re hard to read.'],
+        ()=>hbars([...A.S].map(s=>({label:s.town,value:A.visits[s.id]})).sort((a,b)=>b.value-a.value),{W:440,title:'Visits by site, 2025',label:'Flat sorted bar chart of visits'}),
+        ['Flat bars, sorted, with the values printed: every number can be read exactly.','One colour, because the colour isn\'t saying anything.']],
+      ['Rainbow or highlight?', ()=>hbars(A.S.map((s,k)=>({label:s.town,value:A.newBySite[s.id],color:rainbow[k]})),{W:440,title:'New members 2025',label:'Rainbow bar chart of new members'}),
+        ['Six colours suggest six categories that matter equally. The reader can\'t tell what the point is.','Red and green next to each other are a problem for colour-blind readers.'],
+        ()=>{ const low=A.S.reduce((a,s)=>A.newBySite[s.id]<A.newBySite[a.id]?s:a); return hbars([...A.S].sort((a,b)=>A.newBySite[b.id]-A.newBySite[a.id]).map(s=>({label:s.town,value:A.newBySite[s.id],color:s.id===low.id?ACCENT:GREY})),{W:440,title:`${low.town} gained the fewest new members in 2025`,label:'Grey bar chart highlighting one site'}); },
+        ['Grey for context, one colour for the point, and a title that says what the point is.','It works in greyscale and for colour-blind readers.']],
+      ['Cluttered or clean?', ()=>{ const it=A.PLANS.map((p,k)=>({label:PLAN_NAMES[p],value:A.byPlan[p]})), W=560,H=290,F=chartFrame(W,H,{l:56,r:120,t:36,b:70}),mx=Math.ceil(Math.max(...it.map(i=>i.value))/100)*100+100,Y=v=>F.y0-v/mx*(F.y0-F.y1),bw=(F.x1-F.x0)/it.length,svg=newSvg(W,H,'Cluttered column chart of members by plan');
+          svg.append(sv('rect',{x:1,y:1,width:W-2,height:H-2,fill:'#f2f2f2',stroke:'#000','stroke-width':2}),T(W/2,22,'Chart Title',{'text-anchor':'middle',class:'ch-title'}));
+          for (let t=0;t<=mx;t+=50) svg.append(sv('line',{x1:F.x0,x2:F.x1,y1:Y(t),y2:Y(t),stroke:'#777','stroke-width':1}),T(F.x0-6,Y(t)+4,t.toFixed(2),{'text-anchor':'end',class:'ax'}));
+          it.forEach((v,i)=>{ const x=F.x0+i*bw+bw*.15; svg.append(sv('rect',{x,y:Y(v.value),width:bw*.7,height:F.y0-Y(v.value),fill:'#4472c4',stroke:'#000'}),T(x+bw*.35,Y(v.value)-5,v.value.toFixed(2),{'text-anchor':'middle',class:'ax'}),T(x+bw*.35,F.y0+14,v.label,{'text-anchor':'end',class:'ax',transform:`rotate(-45 ${x+bw*.35} ${F.y0+14})`})); });
+          svg.append(sv('rect',{x:F.x1+12,y:F.y1+20,width:96,height:28,fill:'#fff',stroke:'#000'}),sv('rect',{x:F.x1+18,y:F.y1+28,width:12,height:12,fill:'#4472c4'}),T(F.x1+36,F.y1+38,'Series1',{class:'ax'}));
+          return svg; },
+        ['A default title ("Chart Title") and legend ("Series1") that say nothing.','Heavy gridlines every 50, a border and a grey background compete with the data.','Decimal places on a count of people, and sideways labels.'],
+        ()=>hbars(A.PLANS.map(p=>({label:PLAN_NAMES[p],value:A.byPlan[p]})).sort((a,b)=>b.value-a.value),{W:440,lw:110,title:'Standard is the most popular plan among active members',label:'Clean bar chart of members by plan'}),
+        ['"Remove to improve": no background, border, gridlines or legend.','Whole numbers, horizontal labels, sorted bars, and a title that states the finding.']],
+    ];
+    el.innerHTML=TABS(pairs.map(([lbl],i)=>({label:lbl,html:`<div class="mk-pair" data-slot="m${i}"></div>`}))); wireTabs(el);
+    pairs.forEach(([lbl,before,bad,after,good],i)=>{ const slot=$(`[data-slot=m${i}]`,el);
+      slot.append(h('div',{class:'mk mk-before'}, h('div',{class:'mk-tag'},'Before'), h('div',{class:'w-fig'}, before()), h('ul',{class:'mk-notes'}, bad.map(t=>h('li',{},t)))),
+        h('div',{class:'mk mk-after'}, h('div',{class:'mk-tag'},'After'), h('div',{class:'w-fig'}, after()), h('ul',{class:'mk-notes'}, good.map(t=>h('li',{},t))))); });
+  },
+  heatmap(el){
+    const A=AGG(), days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], all=A.S.flatMap(s=>A.week[s.id]), lo=Math.min(...all), hi=Math.max(...all);
+    const shade=v=>{ const t=(v-lo)/(hi-lo); return `rgb(${Math.round(247-t*(247-47))},${Math.round(251-t*(251-106))},${Math.round(255-t*(255-163))})`; };
+    const tb=h('tbody'); A.S.forEach(s=>tb.append(h('tr',{}, h('th',{scope:'row'},s.town), ...A.week[s.id].map(v=>{ const t=(v-lo)/(hi-lo); const td=h('td',{style:`background:${shade(v)};color:${t>.55?'#fff':'#1d2427'}`},String(v)); return td; }))));
+    el.append(h('div',{class:'tbl-wrap'}, h('table',{class:'heat','data-testid':'heatmap'}, h('thead',{},h('tr',{},h('th',{},''),...days.map(d=>h('th',{scope:'col'},d)))), tb)),
+      h('p',{class:'small muted'},'Visits in 2025. The darker the cell, the more visits. Numbers stay in each cell, so it works for colour-blind readers too.'));
+  },
+  bignumbers(el){
+    const A=AGG();
+    const items=[[fmtN(A.total),'gym visits in 2025, across six sites.'],[Math.round(A.peak/A.total*100)+'%','of all visits start between 5 pm and 7 pm.'],[Math.round(A.attended/A.bookings*100)+'%','of class bookings were attended. The rest were no-shows.']];
+    el.append(h('div',{class:'bignums'}, items.map(([n,t])=>h('div',{class:'bignum'}, h('b',{},n), h('span',{},t)))));
+  },
+};
+Object.assign(WIDGETS, WIDGETS2);
+
 function wireWidgets(root){ $$('[data-widget]',root).forEach(el=>{ if (el.dataset.ready) return; el.dataset.ready='1'; const f=WIDGETS[el.dataset.widget]; if (f) f(el); }); }
 function wireTabs(root){
   $$('[data-ltabs]',root).forEach(box=>{ if (box.dataset.wired) return; box.dataset.wired='1';

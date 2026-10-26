@@ -917,3 +917,29 @@ svg.erd .tbl.fact .tbl-head{fill:var(--pink)}
 .tcard-cols .linklike{font-weight:600;font-size:.92rem;text-decoration-thickness:1px}
 
 .opt-badge{display:inline-block;margin-left:8px;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--ink);color:#fff;border-radius:999px;padding:2px 8px;vertical-align:middle}
+
+/* Chart gallery, makeovers, highlight table, big numbers, relationships */
+svg.chart .ch-title{font:700 14px var(--f-body);fill:var(--ink)}
+svg.chart .ax.lab{fill:var(--ink-2);font-size:12px} svg.chart .ax.val{fill:var(--ink);font-weight:600}
+svg.chart .in-bar{font:700 11px var(--f-body);fill:#fff}
+.gal-h{font-weight:700;margin:4px 0 8px}
+.gal-why{font-size:.95rem;margin:10px 0 0}
+.mk-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mk{display:flex;flex-direction:column;gap:8px}
+.mk-tag{font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 10px;align-self:flex-start;color:#fff}
+.mk-before .mk-tag{background:#8a5a00} .mk-after .mk-tag{background:var(--ok)}
+.mk-notes{margin:0;padding-left:1.2em;font-size:.92rem} .mk-notes li{margin-bottom:4px}
+.sm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+table.heat{border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;margin:0 0 6px}
+table.heat th{font-size:.85rem;padding:4px 8px;text-align:left;font-weight:600}
+table.heat thead th{text-align:center}
+table.heat td{padding:7px 8px;text-align:right;border-radius:4px;font-size:.88rem;min-width:2.6rem}
+table.heat th{white-space:nowrap}
+.bignums{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:12px;margin:0 0 18px}
+.bignum{background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:16px}
+.bignum b{display:block;font-family:var(--f-head);font-size:2.6rem;line-height:1.05;color:var(--pink)}
+.bignum span{font-size:.95rem}
+.rel-list{margin:10px 0 6px}
+.rel-list button{font-size:.82rem}
+.rel-say{background:var(--paper);border-left:4px solid var(--pink);border-radius:var(--r);padding:10px 14px;min-height:2.8em}
+@media (max-width:760px){ .mk-pair{grid-template-columns:minmax(0,1fr)} }
