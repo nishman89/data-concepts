@@ -329,14 +329,97 @@ const WIDGETS = {
     el.append(grid);
   },
   formats(el){
-    const ms=WB.sheet('Members').rows.slice(0,3).map(r=>({id:r[0], first:r[1], last:r[2], plan:r[7], joined:fmtDate(r[8],'yyyy-mm-dd')}));
-    const txt=ms.map(m=>`${m.first} ${m.last} joined on ${m.joined} on the ${m.plan} plan (member ${m.id}).`).join('\n');
-    const csv='MemberID,FirstName,LastName,PlanCode,JoinDate\n'+ms.map(m=>[m.id,m.first,m.last,m.plan,m.joined].join(',')).join('\n');
-    const json='[\n'+ms.map(m=>`  {"memberId": "${m.id}", "firstName": "${m.first}", "lastName": "${m.last}", "plan": "${m.plan}", "joined": "${m.joined}"}`).join(',\n')+'\n]';
-    const yml='members:\n'+ms.map(m=>`  - member_id: ${m.id}\n    first_name: ${m.first}\n    last_name: ${m.last}\n    plan: ${m.plan}\n    joined: ${m.joined}`).join('\n');
-    const xml='<?xml version="1.0" encoding="UTF-8"?>\n<members>\n'+ms.map(m=>`  <member id="${m.id}">\n    <firstName>${m.first}</firstName>\n    <lastName>${m.last}</lastName>\n    <plan>${m.plan}</plan>\n    <joined>${m.joined}</joined>\n  </member>`).join('\n')+'\n</members>';
-    el.innerHTML=TABS([['.txt',txt],['.csv',csv],['.json',json],['.yml',yml],['.xml',xml]].map(([label,code])=>({label, html:`<pre class="code">${esc(code)}</pre>`})));
-    wireTabs(el);
+    /* Three real members (two active, one cancelled), each with a text, number, true/false and missing value */
+    const sh=WB.sheet('Members'), rows=sh.rows, fee=Object.fromEntries(WB.sheet('Plans').rows.map(r=>[r[0],r[2]]));
+    const act=rows.filter(r=>r[9]==='Active'), can=rows.filter(r=>r[9]!=='Active');
+    const ms=[act[0],can[0],act[1]].map(r=>({id:r[0],first:r[1],last:r[2],plan:r[7],fee:fee[r[7]],joined:fmtDate(r[8],'yyyy-mm-dd'),active:r[9]==='Active',cancel:r[10]!=null?fmtDate(r[10],'yyyy-mm-dd'):null}));
+    const t=(text,...parts)=>({text,parts});
+    const NL=t('\n');
+    const F={};
+    // .txt
+    F.txt={ toks:[t('Sparta Leisure members, exported 2 Jan 2026','free'),NL,NL, ...ms.flatMap((m,i)=>[
+        t(`${m.first} ${m.last}`,'value','line'),t(' (member ','free','line'),t(m.id,'value','line'),t(') joined on ','free','line'),t(m.joined,'value','line'),t(' on the ','free','line'),t(m.plan,'value','line'),
+        t(' plan, paying £','free','line'),t(String(m.fee),'value','line'),t(m.active?' a month, and is still a member.':` a month. They cancelled on `,'free','line'),...(m.active?[]:[t(m.cancel,'value','line'),t('.','free','line')]),...(i<ms.length-1?[NL]:[])])],
+      parts:[['line','A line','One member per line here, but only because whoever wrote it chose to. Nothing in the format says so.'],
+        ['value','The data','The values are buried inside sentences. A program can\'t reliably find them, so plain text is for people, not for exchanging data.'],
+        ['free','Everything else','Free text: words, spaces and punctuation, with no rules at all.']],
+      note:'<b>Good for:</b> notes, logs and messages for people to read. <b>Watch out:</b> there\'s no structure, no types and no agreed way to separate values, so it\'s the worst format for moving data between systems.' };
+    // .csv
+    const head=['MemberID','FirstName','LastName','PlanCode','MonthlyFee','JoinDate','Active','CancelDate'];
+    F.csv={ toks:[...head.flatMap((h2,i)=>[t(h2,'header'),...(i<head.length-1?[t(',','delim','header')]:[])]),NL,
+        ...ms.flatMap((m,k)=>{ const vals=[m.id,m.first,m.last,m.plan,String(m.fee),m.joined,m.active?'TRUE':'FALSE',m.cancel??''];
+          return [...vals.flatMap((v,i)=>[v===''?t('','empty','record'):t(v,'field','record'),...(i<vals.length-1?[t(',','delim','record')]:[])]),...(k<ms.length-1?[NL]:[])]; })],
+      parts:[['header','Header row','The first line names the columns. It\'s optional, but almost always there.'],
+        ['record','Record','Each line after the header is one record (a row). A line break ends the record.'],
+        ['field','Field','One value. Fields are matched to columns by position: the 4th field goes in the 4th column.'],
+        ['delim','Delimiter','The comma that separates fields. Some files use a semicolon or a tab instead (TSV). If a value contains a comma, it\'s wrapped in double quotes: <code>"Smith, Jo"</code>.'],
+        ['empty','Empty field','Two commas with nothing between them, or a comma at the end of a line: a missing value. CSV can\'t tell "missing" from "blank text".']],
+      note:'<b>Good for:</b> moving one table between any two systems. Every tool can read it. <b>Watch out:</b> there are no types. <code>32.99</code>, <code>TRUE</code> and <code>2019-01-01</code> are all just text until a program guesses, which is how phone numbers lose their leading zero. CSV holds one table only, with no formulas or formatting.' };
+    // .json
+    const jv=(v,ind)=> v===null?t('null','null'):typeof v==='number'?t(String(v),'number'):typeof v==='boolean'?t(String(v),'bool'):t(`"${v}"`,'string');
+    const jobj=(m,last)=>{ const kv=[['memberId',m.id],['firstName',m.first],['lastName',m.last],['plan',m.plan],['monthlyFee',m.fee],['joined',m.joined],['active',m.active],['cancelDate',m.cancel]];
+      const out=[t('    {','object')];
+      kv.forEach(([k,v],i)=>{ out.push(NL,t('      '),t(`"${k}"`,'key'),t(': ','punct'),jv(v)); if (i<kv.length-1) out.push(t(',','punct')); });
+      out.push(NL,t('    }','object')); if (!last) out.push(t(',','punct')); out.push(NL); return out; };
+    F.json={ toks:[t('{','object'),NL,t('  '),t('"exported"','key'),t(': ','punct'),t('"2026-01-02"','string'),t(',','punct'),NL,t('  '),t('"members"','key'),t(': ','punct'),t('[','array'),NL,
+        ...ms.flatMap((m,i)=>jobj(m,i===ms.length-1)),t('  ]','array'),NL,t('}','object')],
+      parts:[['object','Object { }','Curly brackets hold a set of key-value pairs: one member, or the whole file. Objects can sit inside other objects.'],
+        ['array','Array [ ]','Square brackets hold an ordered list, here a list of member objects.'],
+        ['key','Key','The name of a value, always in double quotes. Keys must be unique within an object.'],
+        ['punct','Colon and comma',': separates a key from its value, and , separates one pair (or list item) from the next. No comma after the last one.'],
+        ['string','String','Text, in double quotes.'],
+        ['number','Number','No quotes, so it\'s stored as a real number: <code>32.99</code>.'],
+        ['bool','Boolean','<code>true</code> or <code>false</code>, without quotes.'],
+        ['null','null','A value that\'s deliberately missing, which is different from empty text <code>""</code>.']],
+      note:'<b>Good for:</b> web apps and APIs, and data that\'s nested (a member with a list of bookings inside it). It keeps types: numbers, Booleans and null survive the trip. <b>Watch out:</b> one missing comma or quote breaks the whole file, and nested data has to be flattened into a table before it fits in Excel (Power Query\'s "expand").' };
+    // .yml
+    const yv=v=> v===null?t('null','null'):typeof v==='number'?t(String(v),'number'):typeof v==='boolean'?t(String(v),'bool'):t(String(v),'string');
+    F.yml={ toks:[t('# Sparta Leisure members, exported 2 Jan 2026','comment'),NL,t('exported','key'),t(': ','colon'),t('2026-01-02','string'),NL,t('members','key'),t(':','colon'),NL,
+        ...ms.flatMap((m,i)=>{ const kv=[['member_id',m.id],['first_name',m.first],['last_name',m.last],['plan',m.plan],['monthly_fee',m.fee],['joined',m.joined],['active',m.active],['cancel_date',m.cancel]];
+          return kv.flatMap(([k,v],j)=>[ j===0?t('  ','indent'):t('    ','indent'), ...(j===0?[t('- ','dash')]:[]), t(k,'key'), t(': ','colon'), yv(v), ...(i===ms.length-1&&j===kv.length-1?[]:[NL]) ]); })],
+      parts:[['comment','Comment','A line starting with # is ignored by programs. It\'s a note for people.'],
+        ['key','Key','The name of a value. No quotes needed.'],
+        ['colon','Colon',': separates a key from its value. A key with nothing after it starts a nested block.'],
+        ['indent','Indentation','The spaces at the start of a line show what belongs inside what, instead of brackets. Use spaces, never tabs, and be consistent.'],
+        ['dash','List item -','A dash starts a new item in a list: here, a new member.'],
+        ['string','String','Text. Quotes are optional unless the text could be mistaken for something else.'],
+        ['number','Number','Read as a number: <code>32.99</code>.'],
+        ['bool','Boolean','<code>true</code> or <code>false</code>.'],
+        ['null','null','A deliberately missing value. <code>~</code> means the same.']],
+      note:'<b>Good for:</b> configuration files that people edit by hand, such as data pipeline settings. It holds the same data as JSON, with less punctuation. <b>Watch out:</b> the spaces matter. One wrongly indented line changes the meaning or breaks the file, and some values are read as types you didn\'t intend (<code>no</code> can become false).' };
+    // .xml
+    const xel=(name,val,ind)=> val===null?[t(ind),t(`<${name}/>`,'empty','tag')]:[t(ind),t(`<${name}>`,'tag'),t(String(val),'text'),t(`</${name}>`,'tag')];
+    F.xml={ toks:[t('<?xml version="1.0" encoding="UTF-8"?>','decl'),NL,t('<!-- Sparta Leisure members, exported 2 Jan 2026 -->','comment'),NL,t('<members','root'),t(' exported="2026-01-02"','attr'),t('>','root'),NL,
+        ...ms.flatMap(m=>[t('  '),t('<member','tag','element'),t(` id="${m.id}"`,'attr','element'),t('>','tag','element'),NL,
+          ...[['firstName',m.first],['lastName',m.last],['plan',m.plan],['monthlyFee',m.fee],['joined',m.joined],['active',m.active],['cancelDate',m.cancel]].flatMap(([k,v])=>[...xel(k,v,'    ').map(x=>x.parts.length?{text:x.text,parts:[...x.parts,'element']}:x),NL]),
+          t('  '),t('</member>','tag','element'),NL]),t('</members>','root')],
+      parts:[['decl','Declaration','The first line says it\'s XML, which version, and how the characters are encoded (UTF-8).'],
+        ['comment','Comment','<code>&lt;!-- … --&gt;</code> is a note for people. Programs ignore it.'],
+        ['root','Root element','Every XML document has exactly one outer element that holds everything else: here, <code>&lt;members&gt;</code>.'],
+        ['element','Element','A start tag, its content and a matching end tag. Selecting this highlights each whole <code>&lt;member&gt;</code>, with its child elements nested inside.'],
+        ['tag','Tags','<code>&lt;plan&gt;</code> starts an element and <code>&lt;/plan&gt;</code> ends it. The names are made up by whoever designs the file, and they\'re case-sensitive.'],
+        ['attr','Attribute','A name="value" pair inside a start tag, often used for IDs.'],
+        ['text','Text content','The data between a start tag and its end tag. Everything is text: XML has no built-in numbers or Booleans. A separate schema (XSD) can define types.'],
+        ['empty','Empty element','<code>&lt;cancelDate/&gt;</code> opens and closes in one tag: the element is there, but it has no value.']],
+      note:'<b>Good for:</b> documents and data feeds between organisations, especially older or official systems (banking, government, Office files are XML inside). It\'s self-describing and can be checked against a schema. <b>Watch out:</b> it\'s wordy: every value is wrapped in two tags, so files are large. And without a schema, every value is just text.' };
+
+    const order=[['.txt','txt'],['.csv','csv'],['.json','json'],['.yml','yml'],['.xml','xml']];
+    el.innerHTML=TABS(order.map(([label,k])=>({label,html:`<div class="fmt" data-slot="${k}"></div>`}))); wireTabs(el);
+    order.forEach(([label,k])=>{
+      const f=F[k], slot=$(`[data-slot=${k}]`,el), colour={}; f.parts.forEach(([p],i)=>colour[p]='fp'+(i%9));
+      const pre=h('pre',{class:'code fmt-code','data-testid':`format-${k}`});
+      f.toks.forEach(x=>{ if (!x.parts.length){ pre.append(x.text); return; } const sp=h('span',{class:'tk '+colour[x.parts[0]]+(x.text===''?' tk-empty':''),'data-parts':x.parts.join(' '),title:x.text===''?'An empty field':null}, x.text); pre.append(sp); });
+      const legend=h('ol',{class:'fmt-legend','aria-label':`The parts of a ${label} file`});
+      const desc=h('p',{class:'fmt-desc','aria-live':'polite'},'Select a part below, or any piece of the file above, to see what it is.');
+      let pinned=null;
+      const light=p=>{ pre.classList.toggle('dim',!!p); $$('.tk',pre).forEach(sp=>sp.classList.toggle('lit',!!p && sp.dataset.parts.split(' ').includes(p))); $$('button',legend).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.part===p)));
+        const d=f.parts.find(x=>x[0]===p); desc.innerHTML=d?`<b>${d[1]}.</b> ${d[2]}`:'Select a part below, or any piece of the file above, to see what it is.'; };
+      f.parts.forEach(([p,name])=>{ const b=h('button',{type:'button',class:'fmt-part '+colour[p],'data-part':p,'aria-pressed':'false','data-testid':`format-${k}-part-${p}`},h('span',{class:'sw','aria-hidden':'true'}),name);
+        b.addEventListener('mouseenter',()=>light(p)); b.addEventListener('mouseleave',()=>light(pinned)); b.addEventListener('focus',()=>light(p)); b.addEventListener('blur',()=>light(pinned));
+        b.addEventListener('click',()=>{ pinned = pinned===p ? null : p; light(pinned); }); legend.append(h('li',{},b)); });
+      pre.addEventListener('click',e=>{ const sp=e.target.closest('.tk'); if (!sp) return; const p=sp.dataset.parts.split(' ')[0]; pinned = pinned===p ? null : p; light(pinned); });
+      slot.append(pre, legend, desc, h('p',{class:'fmt-note',html:f.note}));
+    });
   },
   histogram(el){
     const ages = (()=>{ const sh=WB.sheet('Members'), end=serialOf(2025,12,31); return sh.rows.map(r=>{ const b=fromSerial(r[4]), e=fromSerial(end); return e.y-b.y-((e.m<b.m||(e.m===b.m&&e.d<b.d))?1:0); }); })();

@@ -82,7 +82,7 @@ check:[
 ]},
 formats:{ title:'File formats', summary:'TXT, CSV, XLSX, JSON, YAML, XML and DAT: what each one is and when you\'ll meet it.',
 learn:`
-<p>Data moves between systems in files, and each format has its strengths. Below are the same three Sparta Leisure members in five formats. Compare how each one marks where a value starts and ends.</p>
+<p>Data moves between systems in files, and each format has its strengths. Below are the same three Sparta Leisure members in five formats, with a fee (a number), whether they're still a member (true or false) and a cancel date that's missing for two of them. Select the parts of each file to see how it's built, and compare how each format marks where a value starts and ends, and whether it knows a number from text.</p>
 ${W('formats')}
 <table class="mini"><tr><th>Format</th><th>What it is</th><th>You'll meet it when…</th></tr>
 <tr><td><code>.txt</code></td><td>Plain, unformatted text. Any program can open it.</td><td>reading logs, notes and simple exports</td></tr>
